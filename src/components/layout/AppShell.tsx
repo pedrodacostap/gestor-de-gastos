@@ -2,6 +2,7 @@ import { Bell, LogOut, Plus, Search } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { mobileNavigationItems, navigationItems } from "../../app/navigation";
 import { useAuth } from "../../context/auth/useAuth";
+import { ConnectionStatus, InstallAppPrompt } from "../pwa";
 import { Button } from "../ui";
 
 function getCurrentTitle(pathname: string) {
@@ -67,7 +68,7 @@ export function AppShell() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/72 px-4 py-3 backdrop-blur-2xl md:px-8 lg:px-10">
+          <header className="sticky top-0 z-30 border-b border-white/10 bg-zinc-950/72 px-4 py-[max(env(safe-area-inset-top),0.75rem)] backdrop-blur-2xl md:px-8 lg:px-10">
             <div className="flex min-h-12 items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-zinc-400 lg:hidden">
@@ -79,6 +80,7 @@ export function AppShell() {
               </div>
 
               <div className="flex items-center gap-2">
+                <ConnectionStatus />
                 <Button aria-label="Pesquisar" size="sm" variant="ghost">
                   <Search aria-hidden="true" className="h-5 w-5" />
                 </Button>
@@ -102,6 +104,8 @@ export function AppShell() {
           <main className="flex-1 px-4 pb-24 pt-5 md:px-8 md:pt-7 lg:px-10 lg:pb-10">
             <Outlet />
           </main>
+
+          <InstallAppPrompt />
 
           <nav
             aria-label="Navegação mobile"

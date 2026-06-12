@@ -1,9 +1,9 @@
 # Gestor de Gastos
 
 Aplicativo financeiro em React para organizar gastos, contas, cartões,
-transações, metas, dívidas e reserva de emergência.
+transações, metas, dívidas, assinaturas, orçamentos e planejamento pessoal.
 
-O projeto está na Sprint 7: Metas, Dívidas e Reserva de Emergência.
+O projeto está na Sprint 9: PWA, Offline e Instalação.
 
 ## Tecnologias
 
@@ -15,6 +15,7 @@ O projeto está na Sprint 7: Metas, Dívidas e Reserva de Emergência.
 - Supabase
 - Recharts
 - Lucide React
+- vite-plugin-pwa
 
 ## Como Rodar
 
@@ -38,6 +39,13 @@ npm run lint
 npm run build
 ```
 
+Teste do PWA em produção local:
+
+```bash
+npm run build
+npm run preview
+```
+
 ## Migrations Supabase
 
 Execute nesta ordem:
@@ -47,6 +55,7 @@ supabase/migrations/001_create_profiles.sql
 supabase/migrations/002_create_financial_core.sql
 supabase/migrations/003_create_credit_cards.sql
 supabase/migrations/004_create_planning_core.sql
+supabase/migrations/005_create_calendar_subscriptions_budgets.sql
 ```
 
 Pelo painel:
@@ -62,68 +71,52 @@ supabase link --project-ref SEU_PROJECT_REF
 supabase db push
 ```
 
-## Sprint 7
+## PWA
 
-Tabelas criadas:
+O app possui manifest, ícones, Apple Touch Icon, service worker e tela offline.
 
-- `goals`
-- `goal_movements`
-- `debts`
-- `debt_payments`
-- `emergency_reserve_settings`
+Comportamento configurado:
 
-Funcionalidades:
+- Cache de assets estáticos do app.
+- Fallback de navegação para o app shell em `index.html`, mantendo rotas protegidas e Supabase Auth estáveis.
+- Tela informativa offline disponível em `offline.html`.
+- Atualização automática e limpeza de caches antigos.
+- Chamadas para `*.supabase.co` usam `NetworkOnly`, evitando cache de autenticação e dados sensíveis.
+- Prompt de instalação para Chrome desktop e Android.
+- Instrução específica para iPhone: Safari > Compartilhar > Adicionar à Tela de Início.
 
-- Criar, editar e excluir metas.
-- Aportar em metas.
-- Retirar de metas.
-- Histórico de aportes e retiradas.
-- Aporte gera transação de despesa quando uma conta é escolhida.
-- Retirada gera transação de receita quando uma conta é escolhida.
-- Criar, editar e excluir dívidas.
-- Registrar pagamento parcial de dívida.
-- Pagamento de dívida gera transação de despesa.
-- Progresso de quitação.
-- Próxima parcela.
-- Alerta para dívidas com juros altos.
-- Reserva de emergência com meta de 3, 6, 9 ou 12 meses.
-- Reserva vinculada a uma meta existente.
-- Dashboard com principais metas, total em dívidas, reserva e alertas de dívida.
+## Como Testar Instalação
 
-## Como Testar
+Chrome desktop:
 
-Metas:
+1. Rode `npm run build` e `npm run preview`.
+2. Abra a URL do preview no Chrome.
+3. Use o ícone de instalação na barra de endereço ou o menu do navegador.
 
-1. Vá para `Metas`.
-2. Crie uma meta com valor alvo e valor atual.
-3. Clique em `Aportar`.
-4. Escolha uma conta para gerar uma transação de despesa.
-5. Clique em `Retirar`.
-6. Escolha uma conta para gerar uma transação de receita.
-7. Confira o histórico dentro do card da meta.
+Android Chrome:
 
-Dívidas:
+1. Abra o app publicado em HTTPS ou uma URL local acessível pelo celular.
+2. Aguarde o botão `Instalar app` aparecer ou use o menu do Chrome.
+3. Confirme a instalação.
 
-1. Vá para `Dívidas`.
-2. Crie uma dívida com valor original, saldo restante, juros e parcela.
-3. Clique em `Pagar parcela`.
-4. Escolha a conta de pagamento.
-5. Confira o progresso de quitação e a transação criada.
+iPhone Safari:
 
-Reserva:
+1. Abra o app publicado em HTTPS no Safari.
+2. Toque em Compartilhar.
+3. Toque em Adicionar à Tela de Início.
 
-1. Vá para `Metas`.
-2. Crie uma meta para reserva.
-3. No bloco `Reserva de emergência`, selecione 3, 6, 9 ou 12 meses.
-4. Vincule a meta criada.
-5. O sistema calcula valor recomendado, valor atual, meses cobertos e progresso.
+## Offline
+
+Ao perder conexão, o app exibe indicador visual de status e continua abrindo o
+app shell já cacheado. A tela `Você está offline` fica disponível como fallback
+informativo, explicando que dados já carregados continuam visíveis e que
+alterações serão sincronizadas quando a internet voltar.
 
 ## Ainda Não Implementado
 
-- Calendário financeiro
-- Assinaturas
-- Orçamentos
-- Notificações
+- Relatórios PDF
 - OCR
-- IA
-- PWA
+- IA financeira
+- Notificações push
+- Biometria
+- Face ID

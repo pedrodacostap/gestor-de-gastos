@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#020617" />
+    <title>Você está offline | Gestor de Gastos</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: #020617;
+        color: #f8fafc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: max(env(safe-area-inset-top), 24px) 20px
+          max(env(safe-area-inset-bottom), 24px);
+        background:
+          radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.18), transparent 28rem),
+          radial-gradient(circle at 85% 18%, rgba(244, 63, 94, 0.14), transparent 24rem),
+          #020617;
+      }
+
+      main {
+        width: min(100%, 420px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 22px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(28px);
+      }
+
+      .mark {
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        margin-bottom: 22px;
+        background: #f8fafc;
+        color: #020617;
+        font-weight: 800;
+        font-size: 1.35rem;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 9vw, 3.25rem);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: #cbd5e1;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      ul {
+        display: grid;
+        gap: 10px;
+        margin: 22px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e2e8f0;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark">G</div>
+      <h1>Você está offline</h1>
+      <p>
+        O Gestor de Gastos não conseguiu se conectar agora. Dados já carregados
+        continuam visíveis, e alterações serão sincronizadas quando a internet
+        voltar.
+      </p>
+      <ul aria-label="O que continua funcionando">
+        <li>Consulte informações que já estavam abertas no app.</li>
+        <li>Evite fechar a aba até a conexão voltar.</li>
+        <li>Quando ficar online, o app volta a salvar normalmente.</li>
+      </ul>
+    </main>
+  </body>
+</html>
