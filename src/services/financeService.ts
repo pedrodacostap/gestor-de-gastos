@@ -1,5 +1,9 @@
+import {
+  getMonthLabel,
+  getMonthRange,
+  getRecentMonths,
+} from "../lib/dates";
 import { supabase } from "../lib/supabase/client";
-import { getMonthRange } from "../lib/dates";
 import type { Account, Category, Transaction } from "../types/database";
 import type {
   AccountInput,
@@ -241,10 +245,14 @@ export async function getDashboardData(
   month: string,
 ): Promise<DashboardData> {
   const { startDate, endDate } = getMonthRange(month);
+  const recentMonths = getRecentMonths(month, 6);
+  const { startDate: evolutionStartDate } = getMonthRange(recentMonths[0]);
+
   const [
     { data: accounts, error: accountsError },
     { data: allTransactions, error: allTransactionsError },
     { data: monthTransactions, error: monthTransactionsError },
+    { data: evolutionTransactions, error: evolutionError },
     { data: categories, error: categoriesError },
   ] = await Promise.all([
     supabase.from("accounts").select("*").eq("user_id", userId),
@@ -255,19 +263,28 @@ export async function getDashboardData(
       .eq("user_id", userId)
       .gte("transaction_date", startDate)
       .lte("transaction_date", endDate)
-      .order("transaction_date", { ascending: false }),
+      .order("transaction_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("transaction_date", evolutionStartDate)
+      .lte("transaction_date", endDate),
     supabase.from("categories").select("*").eq("user_id", userId),
   ]);
 
   assertNoError(accountsError);
   assertNoError(allTransactionsError);
   assertNoError(monthTransactionsError);
+  assertNoError(evolutionError);
   assertNoError(categoriesError);
 
   const safeAccounts = accounts ?? [];
   const safeCategories = categories ?? [];
   const safeAllTransactions = allTransactions ?? [];
   const safeMonthTransactions = monthTransactions ?? [];
+  const safeEvolutionTransactions = evolutionTransactions ?? [];
 
   const balanceTotal = safeAccounts.reduce(
     (total, account) =>
@@ -289,6 +306,9 @@ export async function getDashboardData(
     .filter((transaction) => transaction.type === "expense")
     .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
+  const monthResult = incomeMonth - expensesMonth;
+  const savingsRate = incomeMonth > 0 ? (monthResult / incomeMonth) * 100 : 0;
+
   const groupedExpenses = safeMonthTransactions
     .filter((transaction) => transaction.type === "expense")
     .reduce<Record<string, number>>((groups, transaction) => {
@@ -304,21 +324,99 @@ export async function getDashboardData(
       return {
         color: category?.color ?? null,
         name: category?.name ?? "Sem categoria",
+        percent: expensesMonth > 0 ? (total / expensesMonth) * 100 : 0,
         total,
       };
     })
     .sort((a, b) => b.total - a.total);
 
+  const monthlyEvolution = recentMonths.map((monthItem) => {
+    const monthTransactions = safeEvolutionTransactions.filter((transaction) =>
+      transaction.transaction_date.startsWith(monthItem),
+    );
+
+    return {
+      expenses: monthTransactions
+        .filter((transaction) => transaction.type === "expense")
+        .reduce((total, transaction) => total + Number(transaction.amount), 0),
+      income: monthTransactions
+        .filter((transaction) => transaction.type === "income")
+        .reduce((total, transaction) => total + Number(transaction.amount), 0),
+      label: getMonthLabel(monthItem),
+      month: monthItem,
+    };
+  });
+
+  const largestExpenses = attachRelations(
+    safeMonthTransactions
+      .filter((transaction) => transaction.type === "expense")
+      .sort((a, b) => Number(b.amount) - Number(a.amount))
+      .slice(0, 5),
+    safeAccounts,
+    safeCategories,
+  );
+
+  const alerts: DashboardData["alerts"] = [];
+
+  if (monthResult < 0) {
+    alerts.push({
+      description: "As despesas do mês estão maiores que as receitas.",
+      title: "Mês negativo",
+      tone: "danger",
+    });
+  }
+
+  if (safeAccounts.length === 0) {
+    alerts.push({
+      description: "Cadastre uma conta para acompanhar saldo e transações.",
+      title: "Nenhuma conta cadastrada",
+      tone: "info",
+    });
+  }
+
+  if (safeMonthTransactions.length === 0) {
+    alerts.push({
+      description: "Registre receitas ou despesas para gerar análises mensais.",
+      title: "Nenhuma transação no mês",
+      tone: "info",
+    });
+  }
+
+  const highestCategory = categoryExpenses[0];
+  if (highestCategory && highestCategory.percent >= 50 && expensesMonth > 0) {
+    alerts.push({
+      description: `${highestCategory.name} representa ${Math.round(
+        highestCategory.percent,
+      )}% das despesas do mês.`,
+      title: "Categoria com gasto alto",
+      tone: "warning",
+    });
+  }
+
+  if (balanceTotal < 0) {
+    alerts.push({
+      description: "O saldo consolidado das contas está abaixo de zero.",
+      title: "Saldo total negativo",
+      tone: "danger",
+    });
+  }
+
   return {
+    accountCount: safeAccounts.length,
+    alerts,
     balanceTotal,
     categoryExpenses,
     expensesMonth,
     incomeMonth,
-    monthResult: incomeMonth - expensesMonth,
+    largestExpenses,
+    monthlyEvolution,
+    monthResult,
     recentTransactions: attachRelations(
       safeMonthTransactions.slice(0, 6),
       safeAccounts,
       safeCategories,
     ),
+    savingsRate,
+    transactionCountMonth: safeMonthTransactions.length,
   };
 }

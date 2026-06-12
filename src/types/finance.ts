@@ -45,14 +45,30 @@ export type TransactionFilters = {
 };
 
 export type DashboardData = {
+  accountCount: number;
+  alerts: Array<{
+    description: string;
+    tone: "danger" | "warning" | "info";
+    title: string;
+  }>;
   balanceTotal: number;
   categoryExpenses: Array<{
     color: string | null;
     name: string;
+    percent: number;
     total: number;
   }>;
   expensesMonth: number;
   incomeMonth: number;
+  largestExpenses: TransactionWithRelations[];
+  monthlyEvolution: Array<{
+    expenses: number;
+    income: number;
+    label: string;
+    month: string;
+  }>;
   monthResult: number;
   recentTransactions: TransactionWithRelations[];
+  savingsRate: number;
+  transactionCountMonth: number;
 };

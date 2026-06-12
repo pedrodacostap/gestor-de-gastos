@@ -1,11 +1,11 @@
 # Gestor de Gastos
 
-Aplicativo financeiro em React para organizar gastos, contas, categorias e
-transações.
+Aplicativo financeiro em React para organizar gastos, contas, categorias,
+transações e visão financeira mensal.
 
-O projeto está na Sprint 4: Modelagem Financeira Core. A aplicação já possui
-autenticação com Supabase, rotas protegidas e CRUD funcional para contas,
-categorias e transações.
+O projeto está na Sprint 5: Dashboard Financeiro. A aplicação já possui
+autenticação com Supabase, CRUD funcional para contas/categorias/transações e
+um dashboard com dados reais, gráficos e alertas simples.
 
 ## Tecnologias
 
@@ -15,6 +15,7 @@ categorias e transações.
 - Tailwind CSS
 - React Router
 - Supabase
+- Recharts
 - Lucide React
 
 ## Requisitos
@@ -86,6 +87,46 @@ supabase link --project-ref SEU_PROJECT_REF
 supabase db push
 ```
 
+## Dashboard Financeiro
+
+Indicadores implementados:
+
+- Saldo total atual
+- Receitas do mês
+- Despesas do mês
+- Resultado do mês
+- Taxa de economia
+- Últimas transações
+- Gastos por categoria
+- Evolução mensal de receitas x despesas
+- Ranking de maiores despesas
+- Alertas simples
+
+Alertas implementados:
+
+- Mês negativo
+- Nenhuma conta cadastrada
+- Nenhuma transação no mês
+- Categoria com gasto muito alto
+- Saldo total negativo
+
+Filtros implementados:
+
+- Mês atual
+- Mês anterior
+- Seletor de mês/ano
+
+## Como os Cálculos Funcionam
+
+- Saldo total: soma do saldo inicial de cada conta mais receitas e menos despesas de todas as transações da conta.
+- Receitas do mês: soma das transações `income` dentro do mês selecionado.
+- Despesas do mês: soma das transações `expense` dentro do mês selecionado.
+- Resultado do mês: receitas do mês menos despesas do mês.
+- Taxa de economia: resultado do mês dividido pelas receitas do mês, multiplicado por 100.
+- Gastos por categoria: soma das despesas do mês agrupadas por categoria.
+- Evolução mensal: soma receitas e despesas de cada um dos últimos seis meses até o mês selecionado.
+- Ranking de maiores despesas: lista as cinco maiores despesas do mês selecionado.
+
 ## Banco de Dados
 
 Tabelas implementadas:
@@ -101,65 +142,6 @@ Regras implementadas:
 - Cada usuário só pode ler, criar, editar e excluir seus próprios dados.
 - Categorias padrão são criadas automaticamente para novos usuários.
 - Contas não podem ser excluídas pelo app se tiverem transações vinculadas.
-
-## Funcionalidades Atuais
-
-Contas:
-
-- Criar conta
-- Editar conta
-- Excluir conta sem transações
-- Listar contas
-- Calcular saldo atual com saldo inicial + transações
-
-Categorias:
-
-- Categorias padrão automáticas
-- Categoria personalizada
-- Separação entre receita e despesa
-
-Transações:
-
-- Criar receita
-- Criar despesa
-- Editar
-- Excluir
-- Duplicar
-- Filtrar por mês
-- Filtrar por tipo
-- Filtrar por conta
-- Filtrar por categoria
-- Buscar por texto
-
-Dashboard:
-
-- Saldo total
-- Receitas do mês
-- Despesas do mês
-- Resultado do mês
-- Últimas transações
-- Gastos por categoria
-
-## Estrutura Atual
-
-```txt
-src/
-  app/
-  components/
-    auth/
-    layout/
-    ui/
-  context/
-    auth/
-  lib/
-  pages/
-    auth/
-  services/
-  styles/
-  types/
-supabase/
-  migrations/
-```
 
 ## Ainda Não Implementado
 
