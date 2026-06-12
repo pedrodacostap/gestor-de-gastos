@@ -1,11 +1,11 @@
 # Gestor de Gastos
 
 Aplicativo financeiro em React para organizar gastos, contas, categorias,
-transações e visão financeira mensal.
+transações, cartões de crédito, faturas e parcelamentos.
 
-O projeto está na Sprint 5: Dashboard Financeiro. A aplicação já possui
-autenticação com Supabase, CRUD funcional para contas/categorias/transações e
-um dashboard com dados reais, gráficos e alertas simples.
+O projeto está na Sprint 6: Cartões, Faturas e Parcelamentos. A aplicação já
+possui autenticação com Supabase, CRUD financeiro core, dashboard com dados
+reais e sistema funcional de cartão de crédito.
 
 ## Tecnologias
 
@@ -18,14 +18,7 @@ um dashboard com dados reais, gráficos e alertas simples.
 - Recharts
 - Lucide React
 
-## Requisitos
-
-- Node.js 20 ou superior
-- npm
-- Projeto Supabase
-- Supabase CLI opcional para aplicar migrations localmente
-
-## Como rodar localmente
+## Como Rodar Localmente
 
 Instale as dependências:
 
@@ -52,16 +45,10 @@ Inicie o servidor de desenvolvimento:
 npm run dev
 ```
 
-Valide o build de produção:
+Valide o build:
 
 ```bash
 npm run build
-```
-
-Execute o lint:
-
-```bash
-npm run lint
 ```
 
 ## Supabase
@@ -71,14 +58,16 @@ Migrations disponíveis:
 ```txt
 supabase/migrations/001_create_profiles.sql
 supabase/migrations/002_create_financial_core.sql
+supabase/migrations/003_create_credit_cards.sql
 ```
 
 Para aplicar pelo painel do Supabase:
 
 1. Abra o projeto no Supabase.
 2. Acesse SQL Editor.
-3. Execute primeiro `001_create_profiles.sql`.
-4. Execute depois `002_create_financial_core.sql`.
+3. Execute `001_create_profiles.sql`.
+4. Execute `002_create_financial_core.sql`.
+5. Execute `003_create_credit_cards.sql`.
 
 Para aplicar com Supabase CLI:
 
@@ -87,68 +76,82 @@ supabase link --project-ref SEU_PROJECT_REF
 supabase db push
 ```
 
-## Dashboard Financeiro
+## Cartões e Faturas
 
-Indicadores implementados:
+Tabelas implementadas:
+
+- `credit_cards`
+- `credit_card_purchases`
+- `credit_card_installments`
+- `credit_card_invoice_payments`
+
+Funcionalidades:
+
+- Criar, editar e excluir cartão sem compras vinculadas.
+- Criar compra à vista no crédito.
+- Criar compra parcelada.
+- Gerar parcelas mensais automaticamente.
+- Exibir fatura atual, faturas futuras e histórico.
+- Calcular total da fatura.
+- Marcar fatura como paga.
+- Escolher conta bancária para pagar fatura.
+- Criar transação de despesa ao pagar fatura.
+- Calcular limite disponível.
+- Exibir barra de uso do limite.
+
+Regras:
+
+- Compra no crédito não reduz saldo da conta imediatamente.
+- Apenas o pagamento da fatura gera despesa na conta bancária.
+- Parcelas futuras aparecem no mês correto.
+- Editar compra recria parcelas sem duplicar.
+- Excluir compra remove as parcelas relacionadas.
+- Compra com parcela paga não pode ser editada ou excluída sem remover o pagamento.
+
+## Como Testar Cartão, Fatura e Parcelamento
+
+1. Crie uma conta em `Contas`.
+2. Crie categorias de despesa em `Transações`, se quiser categorizar compras.
+3. Vá para `Cartões`.
+4. Crie um cartão com limite, fechamento e vencimento.
+5. Crie uma compra à vista com `1` parcela.
+6. Crie uma compra parcelada, por exemplo:
+
+```txt
+Notebook
+R$ 4.200
+12 parcelas
+```
+
+O app gera 12 parcelas mensais de R$ 350, ajustando centavos na última parcela
+se necessário.
+
+7. Abra a fatura atual para ver as parcelas do mês.
+8. Abra faturas futuras para ver os próximos meses.
+9. Pague uma fatura escolhendo uma conta.
+10. Confira em `Transações` que uma despesa foi criada na conta escolhida.
+
+## Dashboard
+
+O Dashboard inclui:
 
 - Saldo total atual
 - Receitas do mês
 - Despesas do mês
 - Resultado do mês
 - Taxa de economia
-- Últimas transações
+- Evolução mensal
 - Gastos por categoria
-- Evolução mensal de receitas x despesas
 - Ranking de maiores despesas
-- Alertas simples
-
-Alertas implementados:
-
-- Mês negativo
-- Nenhuma conta cadastrada
-- Nenhuma transação no mês
-- Categoria com gasto muito alto
-- Saldo total negativo
-
-Filtros implementados:
-
-- Mês atual
-- Mês anterior
-- Seletor de mês/ano
-
-## Como os Cálculos Funcionam
-
-- Saldo total: soma do saldo inicial de cada conta mais receitas e menos despesas de todas as transações da conta.
-- Receitas do mês: soma das transações `income` dentro do mês selecionado.
-- Despesas do mês: soma das transações `expense` dentro do mês selecionado.
-- Resultado do mês: receitas do mês menos despesas do mês.
-- Taxa de economia: resultado do mês dividido pelas receitas do mês, multiplicado por 100.
-- Gastos por categoria: soma das despesas do mês agrupadas por categoria.
-- Evolução mensal: soma receitas e despesas de cada um dos últimos seis meses até o mês selecionado.
-- Ranking de maiores despesas: lista as cinco maiores despesas do mês selecionado.
-
-## Banco de Dados
-
-Tabelas implementadas:
-
-- `profiles`
-- `accounts`
-- `categories`
-- `transactions`
-
-Regras implementadas:
-
-- RLS habilitado em todas as tabelas do core financeiro.
-- Cada usuário só pode ler, criar, editar e excluir seus próprios dados.
-- Categorias padrão são criadas automaticamente para novos usuários.
-- Contas não podem ser excluídas pelo app se tiverem transações vinculadas.
+- Total em faturas abertas
+- Próximo vencimento de cartão
+- Percentual de limite utilizado
 
 ## Ainda Não Implementado
 
-- Cartões
-- Faturas
 - Metas
 - Dívidas
 - Calendário financeiro
 - Assinaturas
+- Notificações
 - PWA

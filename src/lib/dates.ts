@@ -21,6 +21,36 @@ export function getMonthRange(monthValue: string) {
   };
 }
 
+export function addMonths(monthValue: string, amount: number) {
+  const [year, month] = monthValue.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + amount, 1));
+
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export function dateToMonthValue(dateValue: string) {
+  return dateValue.slice(0, 7);
+}
+
+export function getInvoiceMonth(purchaseDate: string, closingDay: number) {
+  const day = Number(purchaseDate.slice(8, 10));
+  const purchaseMonth = dateToMonthValue(purchaseDate);
+
+  return day > closingDay ? addMonths(purchaseMonth, 1) : purchaseMonth;
+}
+
+export function getInvoiceMonthDate(monthValue: string) {
+  return `${monthValue}-01`;
+}
+
+export function getInvoiceDueDate(monthValue: string, dueDay: number) {
+  const [year, month] = monthValue.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const safeDay = Math.min(dueDay, lastDay);
+
+  return `${monthValue}-${String(safeDay).padStart(2, "0")}`;
+}
+
 export function getTodayValue() {
   return new Date().toISOString().slice(0, 10);
 }

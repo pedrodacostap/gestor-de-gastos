@@ -2,13 +2,14 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
+  CreditCard,
   Landmark,
   PiggyBank,
   Plus,
   ReceiptText,
   TrendingUp,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   Area,
@@ -44,6 +45,9 @@ const emptyDashboard: DashboardData = {
   categoryExpenses: [],
   expensesMonth: 0,
   incomeMonth: 0,
+  cardNextDueDate: null,
+  cardOpenInvoicesTotal: 0,
+  cardUsedLimitPercent: 0,
   largestExpenses: [],
   monthlyEvolution: [],
   monthResult: 0,
@@ -102,6 +106,29 @@ function DashboardSkeleton() {
         <Card className="min-h-80 animate-pulse" tone="elevated" />
       </div>
     </div>
+  );
+}
+
+function UiCardLike({
+  helper,
+  icon,
+  label,
+  value,
+}: {
+  helper: string;
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Card tone="elevated">
+      <div className="flex items-center justify-between gap-4">
+        <Badge tone="blue">{label}</Badge>
+        {icon}
+      </div>
+      <p className="mt-5 text-2xl font-semibold text-white">{value}</p>
+      <p className="mt-2 text-sm text-zinc-400">{helper}</p>
+    </Card>
   );
 }
 
@@ -246,6 +273,27 @@ export function DashboardPage() {
                 </Card>
               );
             })}
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-3">
+            <UiCardLike
+              icon={<CreditCard className="h-5 w-5 text-zinc-300" />}
+              label="Faturas abertas"
+              value={formatCurrency(data.cardOpenInvoicesTotal)}
+              helper="Total de faturas de cartão em aberto"
+            />
+            <UiCardLike
+              icon={<ReceiptText className="h-5 w-5 text-zinc-300" />}
+              label="Próximo vencimento"
+              value={data.cardNextDueDate ? formatDate(data.cardNextDueDate) : "--"}
+              helper="Vencimento mais próximo entre parcelas pendentes"
+            />
+            <UiCardLike
+              icon={<CreditCard className="h-5 w-5 text-zinc-300" />}
+              label="Limite utilizado"
+              value={`${Math.round(data.cardUsedLimitPercent)}%`}
+              helper="Compras pendentes sobre o limite total"
+            />
           </section>
 
           {data.alerts.length > 0 && (

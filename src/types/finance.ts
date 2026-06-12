@@ -61,6 +61,9 @@ export type DashboardData = {
   expensesMonth: number;
   incomeMonth: number;
   largestExpenses: TransactionWithRelations[];
+  cardOpenInvoicesTotal: number;
+  cardNextDueDate: string | null;
+  cardUsedLimitPercent: number;
   monthlyEvolution: Array<{
     expenses: number;
     income: number;
