@@ -13,6 +13,7 @@ import type {
   Debt,
   Goal,
   Subscription,
+  SubscriptionCharge,
   Transaction,
 } from "../types/database";
 import type {
@@ -225,6 +226,7 @@ export async function listPlannerData(
   const safeCategories = categories ?? [];
   const safeTransactions = transactions ?? [];
   const safeSubscriptions = attachSubscriptionSummary(subscriptions ?? [], safeCategories);
+  const safeSubscriptionCharges: SubscriptionCharge[] = charges ?? [];
   const budgetsWithUsage = buildBudgetUsage(
     budgets ?? [],
     safeCategories,
@@ -257,7 +259,7 @@ export async function listPlannerData(
       .sort((a, b) => a.next_charge_date.localeCompare(b.next_charge_date))
       .slice(0, 5),
     nextDueEvents: events.filter((event) => event.date >= startDate).slice(0, 6),
-    subscriptionCharges: charges ?? [],
+    subscriptionCharges: safeSubscriptionCharges,
     subscriptions: safeSubscriptions,
   };
 }
