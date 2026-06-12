@@ -1,105 +1,214 @@
 import {
   ArrowDownRight,
   ArrowUpRight,
-  CalendarDays,
-  CreditCard,
+  Landmark,
   Plus,
-  Sparkles,
+  ReceiptText,
+  TrendingUp,
 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageFrame } from "../components/layout/PageFrame";
 import { Badge, Button, Card, EmptyState } from "../components/ui";
+import { getCurrentMonthValue } from "../lib/dates";
+import { formatCurrency, formatDate } from "../lib/formatters";
+import { getDashboardData } from "../services/financeService";
+import { useAuth } from "../context/auth/useAuth";
+import type { DashboardData } from "../types/finance";
 
-const walletCards = [
-  {
-    accent: "from-sky-400 to-blue-600",
-    label: "Patrimônio líquido",
-    value: "R$ 0,00",
-  },
-  {
-    accent: "from-emerald-400 to-teal-600",
-    label: "Receitas previstas",
-    value: "R$ 0,00",
-  },
-  {
-    accent: "from-rose-400 to-pink-600",
-    label: "Despesas previstas",
-    value: "R$ 0,00",
-  },
-];
-
-const insights = [
-  { label: "Entradas", value: "R$ 0,00", icon: ArrowUpRight, tone: "green" },
-  { label: "Saidas", value: "R$ 0,00", icon: ArrowDownRight, tone: "pink" },
-  { label: "Agenda", value: "0 eventos", icon: CalendarDays, tone: "blue" },
-  { label: "Cartões", value: "0 ativos", icon: CreditCard, tone: "orange" },
-] as const;
+const emptyDashboard: DashboardData = {
+  balanceTotal: 0,
+  categoryExpenses: [],
+  expensesMonth: 0,
+  incomeMonth: 0,
+  monthResult: 0,
+  recentTransactions: [],
+};
 
 export function DashboardPage() {
+  const { user } = useAuth();
+  const [month, setMonth] = useState(getCurrentMonthValue());
+  const [data, setData] = useState<DashboardData>(emptyDashboard);
+  const [message, setMessage] = useState("");
+
+  const loadDashboard = useCallback(async () => {
+    if (!user) {
+      return;
+    }
+
+    setMessage("");
+
+    try {
+      setData(await getDashboardData(user.id, month));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao carregar dashboard.");
+    }
+  }, [month, user]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadDashboard();
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [loadDashboard]);
+
+  const cards = [
+    {
+      icon: Landmark,
+      label: "Saldo total",
+      tone: "blue",
+      value: formatCurrency(data.balanceTotal),
+    },
+    {
+      icon: ArrowUpRight,
+      label: "Receitas do mês",
+      tone: "green",
+      value: formatCurrency(data.incomeMonth),
+    },
+    {
+      icon: ArrowDownRight,
+      label: "Despesas do mês",
+      tone: "pink",
+      value: formatCurrency(data.expensesMonth),
+    },
+    {
+      icon: TrendingUp,
+      label: "Resultado do mês",
+      tone: data.monthResult >= 0 ? "green" : "orange",
+      value: formatCurrency(data.monthResult),
+    },
+  ] as const;
+
   return (
     <PageFrame
-      actions={<Button icon={<Plus className="h-4 w-4" />}>Nova entrada</Button>}
-      description="A primeira tela do aplicativo está pronta para receber dados reais nas próximas sprints."
+      actions={
+        <Link to="/transacoes">
+          <Button icon={<Plus className="h-4 w-4" />}>Nova transação</Button>
+        </Link>
+      }
+      description="Visão consolidada das contas, movimentações do mês e principais categorias de despesa."
       title="Dashboard"
     >
-      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-        <Card className="overflow-hidden p-0" tone="glass">
-          <div className="grid min-h-80 gap-4 p-4 sm:p-5 md:grid-cols-3">
-            {walletCards.map((card) => (
-              <article
-                className={`flex min-h-52 flex-col justify-between rounded-lg bg-gradient-to-br ${card.accent} p-5 text-white shadow-soft`}
-                key={card.label}
-              >
-                <div>
-                  <p className="text-sm font-medium text-white/72">{card.label}</p>
-                  <p className="mt-3 text-3xl font-semibold">{card.value}</p>
-                </div>
-                <div className="flex items-center justify-between text-sm text-white/72">
-                  <span>Gestor</span>
-                  <span>****</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Card>
+      {message && (
+        <p className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">
+          {message}
+        </p>
+      )}
 
-        <Card tone="elevated">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <Badge tone="green">Pronto para evoluir</Badge>
-              <h2 className="mt-4 text-2xl font-semibold text-white">
-                Base premium sem dados fictícios
-              </h2>
-            </div>
-            <Sparkles className="h-7 w-7 text-sky-300" />
-          </div>
-          <p className="mt-4 text-sm leading-6 text-zinc-300">
-            O foco desta sprint é navegação, design system, hierarquia visual e
-            experiência mobile-first.
-          </p>
-        </Card>
-      </section>
+      <Card tone="elevated">
+        <label className="block max-w-xs text-sm font-medium text-zinc-200">
+          Mês de referência
+          <input
+            className="mt-2 h-12 w-full rounded-lg border border-white/10 bg-white/8 px-4 text-base text-white outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-400/20"
+            onChange={(event) => setMonth(event.target.value)}
+            type="month"
+            value={month}
+          />
+        </label>
+      </Card>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {insights.map((item) => {
-          const Icon = item.icon;
+        {cards.map((card) => {
+          const Icon = card.icon;
 
           return (
-            <Card key={item.label} tone="elevated">
+            <Card key={card.label} tone="elevated">
               <div className="flex items-center justify-between gap-4">
-                <Badge tone={item.tone}>{item.label}</Badge>
+                <Badge tone={card.tone}>{card.label}</Badge>
                 <Icon className="h-5 w-5 text-zinc-300" />
               </div>
-              <p className="mt-5 text-2xl font-semibold text-white">{item.value}</p>
-              <p className="mt-2 text-sm text-zinc-400">Aguardando dados reais.</p>
+              <p className="mt-5 text-3xl font-semibold text-white">{card.value}</p>
             </Card>
           );
         })}
       </section>
 
-      <EmptyState
-        description="As próximas sprints vão conectar dados, regras financeiras e persistência. Por enquanto, a interface está preparada para crescer sem reorganização pesada."
-        title="Nenhuma movimentação cadastrada ainda"
-      />
+      <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <Card tone="elevated">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-white">Últimas transações</h2>
+              <p className="mt-1 text-sm text-zinc-400">Movimentações recentes do mês.</p>
+            </div>
+            <ReceiptText className="h-5 w-5 text-sky-300" />
+          </div>
+
+          {data.recentTransactions.length === 0 ? (
+            <EmptyState
+              description="Crie sua primeira conta e registre uma receita ou despesa para popular o dashboard."
+              title="Sem transações no mês"
+            />
+          ) : (
+            <div className="divide-y divide-white/10">
+              {data.recentTransactions.map((transaction) => (
+                <div
+                  className="flex items-center justify-between gap-4 py-3"
+                  key={transaction.id}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-white">{transaction.title}</p>
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {formatDate(transaction.transaction_date)} ·{" "}
+                      {transaction.category?.name ?? "Sem categoria"}
+                    </p>
+                  </div>
+                  <p
+                    className={`shrink-0 font-semibold ${
+                      transaction.type === "income"
+                        ? "text-emerald-300"
+                        : "text-rose-300"
+                    }`}
+                  >
+                    {transaction.type === "income" ? "+" : "-"}
+                    {formatCurrency(Number(transaction.amount))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card tone="elevated">
+          <h2 className="text-lg font-semibold text-white">Gastos por categoria</h2>
+          <p className="mt-1 text-sm text-zinc-400">Ranking das despesas do mês.</p>
+
+          {data.categoryExpenses.length === 0 ? (
+            <p className="mt-8 rounded-lg border border-white/10 bg-white/8 p-4 text-sm text-zinc-300">
+              Nenhuma despesa registrada neste mês.
+            </p>
+          ) : (
+            <div className="mt-5 space-y-4">
+              {data.categoryExpenses.map((category) => {
+                const percent =
+                  data.expensesMonth > 0
+                    ? Math.round((category.total / data.expensesMonth) * 100)
+                    : 0;
+
+                return (
+                  <div key={category.name}>
+                    <div className="mb-2 flex justify-between gap-4 text-sm">
+                      <span className="text-zinc-200">{category.name}</span>
+                      <span className="font-medium text-white">
+                        {formatCurrency(category.total)}
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-white/10">
+                      <div
+                        className="h-2 rounded-full"
+                        style={{
+                          background: category.color ?? "#0a84ff",
+                          width: `${percent}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </section>
     </PageFrame>
   );
 }

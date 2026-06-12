@@ -1,11 +1,11 @@
 # Gestor de Gastos
 
-Aplicativo financeiro em React para organizar gastos, contas, cartões, metas e
-planejamento pessoal.
+Aplicativo financeiro em React para organizar gastos, contas, categorias e
+transações.
 
-O projeto está na Sprint 3: Supabase e autenticação. A aplicação já possui
-cliente Supabase, sessão persistente, contexto de autenticação, rotas protegidas
-e telas públicas para login, cadastro e recuperação de senha.
+O projeto está na Sprint 4: Modelagem Financeira Core. A aplicação já possui
+autenticação com Supabase, rotas protegidas e CRUD funcional para contas,
+categorias e transações.
 
 ## Tecnologias
 
@@ -22,6 +22,7 @@ e telas públicas para login, cadastro e recuperação de senha.
 - Node.js 20 ou superior
 - npm
 - Projeto Supabase
+- Supabase CLI opcional para aplicar migrations localmente
 
 ## Como rodar localmente
 
@@ -64,29 +65,86 @@ npm run lint
 
 ## Supabase
 
-A migration inicial está em:
+Migrations disponíveis:
 
 ```txt
 supabase/migrations/001_create_profiles.sql
+supabase/migrations/002_create_financial_core.sql
 ```
 
-Ela cria:
+Para aplicar pelo painel do Supabase:
 
-- tabela `profiles`
-- campos `id`, `email`, `created_at`, `updated_at`
-- trigger para atualizar `updated_at`
-- trigger para criar perfil ao cadastrar usuário em `auth.users`
-- RLS em `profiles`
-- policy para cada usuário ler apenas o próprio perfil
-- policy para cada usuário atualizar apenas o próprio perfil
+1. Abra o projeto no Supabase.
+2. Acesse SQL Editor.
+3. Execute primeiro `001_create_profiles.sql`.
+4. Execute depois `002_create_financial_core.sql`.
 
-## Estrutura atual
+Para aplicar com Supabase CLI:
+
+```bash
+supabase link --project-ref SEU_PROJECT_REF
+supabase db push
+```
+
+## Banco de Dados
+
+Tabelas implementadas:
+
+- `profiles`
+- `accounts`
+- `categories`
+- `transactions`
+
+Regras implementadas:
+
+- RLS habilitado em todas as tabelas do core financeiro.
+- Cada usuário só pode ler, criar, editar e excluir seus próprios dados.
+- Categorias padrão são criadas automaticamente para novos usuários.
+- Contas não podem ser excluídas pelo app se tiverem transações vinculadas.
+
+## Funcionalidades Atuais
+
+Contas:
+
+- Criar conta
+- Editar conta
+- Excluir conta sem transações
+- Listar contas
+- Calcular saldo atual com saldo inicial + transações
+
+Categorias:
+
+- Categorias padrão automáticas
+- Categoria personalizada
+- Separação entre receita e despesa
+
+Transações:
+
+- Criar receita
+- Criar despesa
+- Editar
+- Excluir
+- Duplicar
+- Filtrar por mês
+- Filtrar por tipo
+- Filtrar por conta
+- Filtrar por categoria
+- Buscar por texto
+
+Dashboard:
+
+- Saldo total
+- Receitas do mês
+- Despesas do mês
+- Resultado do mês
+- Últimas transações
+- Gastos por categoria
+
+## Estrutura Atual
 
 ```txt
 src/
   app/
-    navigation.ts
-    routes.tsx
   components/
     auth/
     layout/
@@ -94,72 +152,21 @@ src/
   context/
     auth/
   lib/
-    supabase/
   pages/
     auth/
+  services/
   styles/
   types/
 supabase/
   migrations/
 ```
 
-## Rotas de autenticação
+## Ainda Não Implementado
 
-- `/login`
-- `/cadastro`
-- `/recuperar-senha`
-
-## Rotas protegidas
-
-Todas as rotas principais do app exigem sessão ativa:
-
-- `/`
-- `/transacoes`
-- `/contas`
-- `/cartoes`
-- `/metas`
-- `/dividas`
-- `/calendario`
-- `/assinaturas`
-- `/orcamentos`
-- `/configuracoes`
-
-## Design System
-
-Componentes disponíveis:
-
-- Button
-- Input
-- Card
-- Modal
-- Dialog
-- Select
-- Badge
-- EmptyState
-- LoadingState
-
-## Escopo atual
-
-Implementado:
-
-- Cliente Supabase
-- `.env.example`
-- Login
-- Cadastro
-- Logout
-- Recuperação de senha
-- Sessão persistente
-- Contexto de autenticação
-- Rotas protegidas
-- Redirecionamento automático
-- Tabela `profiles` via SQL
-- RLS para isolamento por usuário
-
-Ainda não implementado:
-
-- Contas
-- Transações
 - Cartões
+- Faturas
 - Metas
+- Dívidas
 - Calendário financeiro
+- Assinaturas
 - PWA
