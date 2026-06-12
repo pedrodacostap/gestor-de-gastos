@@ -53,6 +53,7 @@ export type DebtPaymentInput = {
 
 export type DebtWithSummary = Debt & {
   high_interest: boolean;
+  is_paid: boolean;
   next_due_date: string;
   paid_amount: number;
   payments: DebtPayment[];

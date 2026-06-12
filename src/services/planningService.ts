@@ -21,11 +21,28 @@ import type {
   PlanningDataBundle,
 } from "../types/planning";
 
+type SupabaseErrorLike = {
+  code?: string;
+  details?: string;
+  hint?: string;
+  message?: string;
+};
+
 function assertNoError(error: unknown) {
   if (!error) return;
   if (error instanceof Error) throw error;
   if (typeof error === "object" && "message" in error) {
-    throw new Error(String(error.message));
+    const supabaseError = error as SupabaseErrorLike;
+    throw new Error(
+      [
+        supabaseError.message,
+        supabaseError.details ? `Detalhes: ${supabaseError.details}` : null,
+        supabaseError.hint ? `Dica: ${supabaseError.hint}` : null,
+        supabaseError.code ? `Código: ${supabaseError.code}` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
   }
   throw new Error("Não foi possível concluir a operação.");
 }
@@ -58,6 +75,7 @@ function buildDebtSummary(debt: Debt, payments: DebtPayment[]): DebtWithSummary 
   return {
     ...debt,
     high_interest: Number(debt.monthly_interest_rate) >= 3,
+    is_paid: Number(debt.remaining_balance) <= 0,
     next_due_date: getInvoiceDueDate(month, debt.due_day),
     paid_amount: paidAmount,
     payments,
@@ -76,7 +94,6 @@ async function ensureEmergencySettings(userId: string) {
     .maybeSingle();
 
   assertNoError(error);
-
   if (data) return data;
 
   const { data: created, error: createError } = await supabase
@@ -184,16 +201,26 @@ export async function createGoal(userId: string, input: GoalInput) {
   assertNoError(error);
 }
 
-export async function updateGoal(goalId: string, input: GoalInput) {
+export async function updateGoal(userId: string, goalId: string, input: GoalInput) {
   const { error } = await supabase
     .from("goals")
-    .update({ ...input, color: input.color || null, icon: input.icon || null, target_date: input.target_date || null })
-    .eq("id", goalId);
+    .update({
+      ...input,
+      color: input.color || null,
+      icon: input.icon || null,
+      target_date: input.target_date || null,
+    })
+    .eq("id", goalId)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
-export async function deleteGoal(goalId: string) {
-  const { error } = await supabase.from("goals").delete().eq("id", goalId);
+export async function deleteGoal(userId: string, goalId: string) {
+  const { error } = await supabase
+    .from("goals")
+    .delete()
+    .eq("id", goalId)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
@@ -202,6 +229,7 @@ export async function createGoalMovement(userId: string, input: GoalMovementInpu
     .from("goals")
     .select("*")
     .eq("id", input.goal_id)
+    .eq("user_id", userId)
     .single();
   assertNoError(goalError);
 
@@ -236,7 +264,8 @@ export async function createGoalMovement(userId: string, input: GoalMovementInpu
   const { error: updateError } = await supabase
     .from("goals")
     .update({ current_amount: Math.max(nextAmount, 0) })
-    .eq("id", input.goal_id);
+    .eq("id", input.goal_id)
+    .eq("user_id", userId);
   assertNoError(updateError);
 
   const { error } = await supabase.from("goal_movements").insert({
@@ -258,16 +287,21 @@ export async function createDebt(userId: string, input: DebtInput) {
   assertNoError(error);
 }
 
-export async function updateDebt(debtId: string, input: DebtInput) {
+export async function updateDebt(userId: string, debtId: string, input: DebtInput) {
   const { error } = await supabase
     .from("debts")
     .update({ ...input, creditor: input.creditor || null })
-    .eq("id", debtId);
+    .eq("id", debtId)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
-export async function deleteDebt(debtId: string) {
-  const { error } = await supabase.from("debts").delete().eq("id", debtId);
+export async function deleteDebt(userId: string, debtId: string) {
+  const { error } = await supabase
+    .from("debts")
+    .delete()
+    .eq("id", debtId)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
@@ -276,14 +310,17 @@ export async function createDebtPayment(userId: string, input: DebtPaymentInput)
     .from("debts")
     .select("*")
     .eq("id", input.debt_id)
+    .eq("user_id", userId)
     .single();
   assertNoError(debtError);
+
+  const paymentAmount = Math.min(input.amount, Number(debt?.remaining_balance ?? input.amount));
 
   const { data: transaction, error: transactionError } = await supabase
     .from("transactions")
     .insert({
       account_id: input.account_id,
-      amount: input.amount,
+      amount: paymentAmount,
       category_id: null,
       notes: input.notes || null,
       payment_method: "debt_payment",
@@ -296,15 +333,17 @@ export async function createDebtPayment(userId: string, input: DebtPaymentInput)
     .single();
   assertNoError(transactionError);
 
-  const nextBalance = Math.max(Number(debt?.remaining_balance ?? 0) - input.amount, 0);
+  const nextBalance = Math.max(Number(debt?.remaining_balance ?? 0) - paymentAmount, 0);
   const { error: updateError } = await supabase
     .from("debts")
     .update({ remaining_balance: nextBalance })
-    .eq("id", input.debt_id);
+    .eq("id", input.debt_id)
+    .eq("user_id", userId);
   assertNoError(updateError);
 
   const { error } = await supabase.from("debt_payments").insert({
     ...input,
+    amount: paymentAmount,
     notes: input.notes || null,
     transaction_id: transaction?.id ?? null,
     user_id: userId,
@@ -326,7 +365,8 @@ export async function updateEmergencyReserveSettings(
       linked_goal_id: input.linked_goal_id || null,
       target_months: input.target_months,
     })
-    .eq("id", settings.id);
+    .eq("id", settings.id)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 

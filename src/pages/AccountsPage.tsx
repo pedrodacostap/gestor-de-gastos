@@ -69,12 +69,14 @@ export function AccountsPage() {
   }, [loadAccounts]);
 
   function openCreateModal() {
+    setMessage("");
     setEditingAccount(null);
     setForm(emptyForm);
     setIsModalOpen(true);
   }
 
   function openEditModal(account: AccountWithBalance) {
+    setMessage("");
     setEditingAccount(account);
     setForm({
       bank: account.bank ?? "",
@@ -90,12 +92,13 @@ export function AccountsPage() {
     event.preventDefault();
 
     if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para salvar contas.");
       return;
     }
 
     try {
       if (editingAccount) {
-        await updateAccount(editingAccount.id, form);
+        await updateAccount(user.id, editingAccount.id, form);
       } else {
         await createAccount(user.id, form);
       }
@@ -108,8 +111,13 @@ export function AccountsPage() {
   }
 
   async function handleDelete(account: AccountWithBalance) {
+    if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para excluir contas.");
+      return;
+    }
+
     try {
-      await deleteAccount(account.id);
+      await deleteAccount(user.id, account.id);
       await loadAccounts();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao excluir conta.");
@@ -123,7 +131,10 @@ export function AccountsPage() {
       title="Contas"
     >
       {message && (
-        <p className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">
+        <p
+          className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100"
+          role="alert"
+        >
           {message}
         </p>
       )}
@@ -197,6 +208,14 @@ export function AccountsPage() {
         title={editingAccount ? "Editar conta" : "Nova conta"}
       >
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {message && (
+            <p
+              className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100"
+              role="alert"
+            >
+              {message}
+            </p>
+          )}
           <Input
             label="Nome"
             onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}

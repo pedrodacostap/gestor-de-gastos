@@ -109,7 +109,7 @@ export function DebtsPage() {
     event.preventDefault();
     if (!user) return;
     try {
-      if (editingDebtId) await updateDebt(editingDebtId, debtForm);
+      if (editingDebtId) await updateDebt(user.id, editingDebtId, debtForm);
       else await createDebt(user.id, debtForm);
       setIsDebtModalOpen(false);
       await loadData();
@@ -157,8 +157,8 @@ export function DebtsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge tone={debt.high_interest ? "orange" : "blue"}>
-                      {debt.high_interest ? "Juros altos" : "Em dia"}
+                    <Badge tone={debt.is_paid ? "green" : debt.high_interest ? "orange" : "blue"}>
+                      {debt.is_paid ? "Quitada" : debt.high_interest ? "Juros altos" : "Em dia"}
                     </Badge>
                   </div>
                   <h2 className="mt-3 text-xl font-semibold text-white">{debt.name}</h2>
@@ -166,7 +166,7 @@ export function DebtsPage() {
                 </div>
                 <div className="flex gap-1">
                   <Button onClick={() => openDebt(debt.id)} size="sm" variant="ghost"><Edit2 className="h-4 w-4" /></Button>
-                  <Button onClick={() => deleteDebt(debt.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                  <Button onClick={() => user && deleteDebt(user.id, debt.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               {debt.high_interest && (
@@ -187,7 +187,9 @@ export function DebtsPage() {
               <p className="mt-3 text-sm text-zinc-400">
                 Próxima parcela: {formatCurrency(Number(debt.installment_amount))} em {formatDate(debt.next_due_date)}
               </p>
-              <Button className="mt-5" isFullWidth onClick={() => openPayment(debt.id)}>Pagar parcela</Button>
+              <Button className="mt-5" disabled={debt.is_paid} isFullWidth onClick={() => openPayment(debt.id)}>
+                {debt.is_paid ? "Dívida quitada" : "Pagar parcela"}
+              </Button>
               {debt.payments.length > 0 && (
                 <div className="mt-5 divide-y divide-white/10">
                   {debt.payments.slice(0, 3).map((payment) => (

@@ -154,12 +154,14 @@ export function TransactionsPage() {
   }, [loadTransactions]);
 
   function openCreateTransaction() {
+    setMessage("");
     setEditingTransaction(null);
     setTransactionForm(createEmptyTransaction(accounts[0]?.id ?? ""));
     setIsTransactionModalOpen(true);
   }
 
   function openEditTransaction(transaction: TransactionWithRelations) {
+    setMessage("");
     setEditingTransaction(transaction);
     setTransactionForm({
       account_id: transaction.account_id,
@@ -178,12 +180,18 @@ export function TransactionsPage() {
     event.preventDefault();
 
     if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para salvar transações.");
+      return;
+    }
+
+    if (!transactionForm.account_id) {
+      setMessage("Selecione uma conta antes de salvar a transação.");
       return;
     }
 
     try {
       if (editingTransaction) {
-        await updateTransaction(editingTransaction.id, transactionForm);
+        await updateTransaction(user.id, editingTransaction.id, transactionForm);
       } else {
         await createTransaction(user.id, transactionForm);
       }
@@ -199,6 +207,7 @@ export function TransactionsPage() {
     event.preventDefault();
 
     if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para salvar categorias.");
       return;
     }
 
@@ -214,6 +223,7 @@ export function TransactionsPage() {
 
   async function handleDuplicate(transaction: TransactionWithRelations) {
     if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para duplicar transações.");
       return;
     }
 
@@ -226,8 +236,13 @@ export function TransactionsPage() {
   }
 
   async function handleDelete(transactionId: string) {
+    if (!user) {
+      setMessage("Sessão expirada. Faça login novamente para excluir transações.");
+      return;
+    }
+
     try {
-      await deleteTransaction(transactionId);
+      await deleteTransaction(user.id, transactionId);
       await loadTransactions();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao excluir transação.");
@@ -238,7 +253,13 @@ export function TransactionsPage() {
     <PageFrame
       actions={
         <>
-          <Button onClick={() => setIsCategoryModalOpen(true)} variant="secondary">
+          <Button
+            onClick={() => {
+              setMessage("");
+              setIsCategoryModalOpen(true);
+            }}
+            variant="secondary"
+          >
             Nova categoria
           </Button>
           <Button icon={<Plus className="h-4 w-4" />} onClick={openCreateTransaction}>
@@ -250,7 +271,10 @@ export function TransactionsPage() {
       title="Transações"
     >
       {message && (
-        <p className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100">
+        <p
+          className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100"
+          role="alert"
+        >
           {message}
         </p>
       )}
@@ -389,6 +413,14 @@ export function TransactionsPage() {
         title={editingTransaction ? "Editar transação" : "Nova transação"}
       >
         <form className="space-y-4" onSubmit={handleTransactionSubmit}>
+          {message && (
+            <p
+              className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100"
+              role="alert"
+            >
+              {message}
+            </p>
+          )}
           <Select
             label="Tipo"
             onChange={(event) =>
@@ -501,6 +533,14 @@ export function TransactionsPage() {
         title="Nova categoria"
       >
         <form className="space-y-4" onSubmit={handleCategorySubmit}>
+          {message && (
+            <p
+              className="rounded-lg border border-amber-300/20 bg-amber-300/10 p-3 text-sm text-amber-100"
+              role="alert"
+            >
+              {message}
+            </p>
+          )}
           <Input
             label="Nome"
             onChange={(event) =>

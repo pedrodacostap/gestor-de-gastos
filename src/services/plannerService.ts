@@ -25,11 +25,28 @@ import type {
   SubscriptionWithSummary,
 } from "../types/planner";
 
+type SupabaseErrorLike = {
+  code?: string;
+  details?: string;
+  hint?: string;
+  message?: string;
+};
+
 function assertNoError(error: unknown) {
   if (!error) return;
   if (error instanceof Error) throw error;
   if (typeof error === "object" && "message" in error) {
-    throw new Error(String(error.message));
+    const supabaseError = error as SupabaseErrorLike;
+    throw new Error(
+      [
+        supabaseError.message,
+        supabaseError.details ? `Detalhes: ${supabaseError.details}` : null,
+        supabaseError.hint ? `Dica: ${supabaseError.hint}` : null,
+        supabaseError.code ? `Código: ${supabaseError.code}` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
   }
   throw new Error("Não foi possível concluir a operação.");
 }
@@ -42,7 +59,9 @@ function normalizeMonth(date: string) {
   return date.slice(0, 7);
 }
 
-function nextBillingDate(subscription: Pick<Subscription, "billing_day" | "recurrence">) {
+function nextBillingDate(
+  subscription: Pick<Subscription, "billing_day" | "recurrence">,
+) {
   const currentMonth = getCurrentMonthValue();
   const today = new Date().toISOString().slice(0, 10);
   let date = getInvoiceDueDate(currentMonth, subscription.billing_day);
@@ -124,11 +143,10 @@ function buildCalendarEvents(args: {
   debts: Debt[];
   goals: Goal[];
   installments: CreditCardInstallment[];
+  month: string;
   subscriptions: SubscriptionWithSummary[];
   transactions: Transaction[];
 }) {
-  const currentMonth = getCurrentMonthValue();
-
   return [
     ...args.transactions.map<CalendarEvent>((transaction) => ({
       amount: Number(transaction.amount),
@@ -145,7 +163,7 @@ function buildCalendarEvents(args: {
       title: `Parcela ${installment.installment_number}`,
     })),
     ...args.cards.map<CalendarEvent>((card) => ({
-      date: getInvoiceDueDate(currentMonth, card.due_day),
+      date: getInvoiceDueDate(args.month, card.due_day),
       id: card.id,
       kind: "invoice",
       title: `Fatura ${card.name}`,
@@ -161,7 +179,7 @@ function buildCalendarEvents(args: {
       })),
     ...args.debts.map<CalendarEvent>((debt) => ({
       amount: Number(debt.installment_amount),
-      date: getInvoiceDueDate(currentMonth, debt.due_day),
+      date: getInvoiceDueDate(args.month, debt.due_day),
       id: debt.id,
       kind: "debt",
       title: debt.name,
@@ -239,6 +257,7 @@ export async function listPlannerData(
     debts: debts ?? [],
     goals: goals ?? [],
     installments: installments ?? [],
+    month,
     subscriptions: safeSubscriptions,
     transactions: safeTransactions,
   });
@@ -274,7 +293,11 @@ export async function createSubscription(userId: string, input: SubscriptionInpu
   assertNoError(error);
 }
 
-export async function updateSubscription(id: string, input: SubscriptionInput) {
+export async function updateSubscription(
+  userId: string,
+  id: string,
+  input: SubscriptionInput,
+) {
   const { error } = await supabase
     .from("subscriptions")
     .update({
@@ -282,12 +305,17 @@ export async function updateSubscription(id: string, input: SubscriptionInput) {
       account_id: input.account_id || null,
       category_id: input.category_id || null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
-export async function cancelSubscription(id: string) {
-  const { error } = await supabase.from("subscriptions").update({ is_active: false }).eq("id", id);
+export async function cancelSubscription(userId: string, id: string) {
+  const { error } = await supabase
+    .from("subscriptions")
+    .update({ is_active: false })
+    .eq("id", id)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
@@ -343,7 +371,11 @@ export async function createBudget(userId: string, input: BudgetInput) {
   assertNoError(error);
 }
 
-export async function deleteBudget(id: string) {
-  const { error } = await supabase.from("budgets").delete().eq("id", id);
+export async function deleteBudget(userId: string, id: string) {
+  const { error } = await supabase
+    .from("budgets")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
   assertNoError(error);
 }

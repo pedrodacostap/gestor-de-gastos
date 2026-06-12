@@ -101,7 +101,7 @@ export function GoalsPage() {
     event.preventDefault();
     if (!user) return;
     try {
-      if (editingGoalId) await updateGoal(editingGoalId, goalForm);
+      if (editingGoalId) await updateGoal(user.id, editingGoalId, goalForm);
       else await createGoal(user.id, goalForm);
       setIsGoalModalOpen(false);
       await loadData();
@@ -203,7 +203,7 @@ export function GoalsPage() {
                 </div>
                 <div className="flex gap-1">
                   <Button onClick={() => openGoal(goal.id)} size="sm" variant="ghost"><Edit2 className="h-4 w-4" /></Button>
-                  <Button onClick={() => deleteGoal(goal.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                  <Button onClick={() => user && deleteGoal(user.id, goal.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <p className="mt-5 text-2xl font-semibold text-white">

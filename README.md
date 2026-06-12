@@ -56,6 +56,7 @@ supabase/migrations/002_create_financial_core.sql
 supabase/migrations/003_create_credit_cards.sql
 supabase/migrations/004_create_planning_core.sql
 supabase/migrations/005_create_calendar_subscriptions_budgets.sql
+supabase/migrations/006_repair_financial_core_rls.sql
 ```
 
 Pelo painel:

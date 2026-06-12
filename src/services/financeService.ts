@@ -17,6 +17,13 @@ import type {
   TransactionWithRelations,
 } from "../types/finance";
 
+type SupabaseErrorLike = {
+  code?: string;
+  details?: string;
+  hint?: string;
+  message?: string;
+};
+
 function assertNoError(error: unknown) {
   if (!error) {
     return;
@@ -27,7 +34,15 @@ function assertNoError(error: unknown) {
   }
 
   if (typeof error === "object" && "message" in error) {
-    throw new Error(String(error.message));
+    const supabaseError = error as SupabaseErrorLike;
+    const parts = [
+      supabaseError.message,
+      supabaseError.details ? `Detalhes: ${supabaseError.details}` : null,
+      supabaseError.hint ? `Dica: ${supabaseError.hint}` : null,
+      supabaseError.code ? `Código: ${supabaseError.code}` : null,
+    ].filter(Boolean);
+
+    throw new Error(parts.join(" "));
   }
 
   throw new Error("Não foi possível concluir a operação.");
@@ -92,7 +107,11 @@ export async function createAccount(userId: string, input: AccountInput) {
   assertNoError(error);
 }
 
-export async function updateAccount(accountId: string, input: AccountInput) {
+export async function updateAccount(
+  userId: string,
+  accountId: string,
+  input: AccountInput,
+) {
   const { error } = await supabase
     .from("accounts")
     .update({
@@ -100,16 +119,18 @@ export async function updateAccount(accountId: string, input: AccountInput) {
       bank: input.bank || null,
       color: input.color || null,
     })
-    .eq("id", accountId);
+    .eq("id", accountId)
+    .eq("user_id", userId);
 
   assertNoError(error);
 }
 
-export async function deleteAccount(accountId: string) {
+export async function deleteAccount(userId: string, accountId: string) {
   const { count, error: countError } = await supabase
     .from("transactions")
     .select("id", { count: "exact", head: true })
-    .eq("account_id", accountId);
+    .eq("account_id", accountId)
+    .eq("user_id", userId);
 
   assertNoError(countError);
 
@@ -117,7 +138,11 @@ export async function deleteAccount(accountId: string) {
     throw new Error("Exclua ou mova as transações antes de remover esta conta.");
   }
 
-  const { error } = await supabase.from("accounts").delete().eq("id", accountId);
+  const { error } = await supabase
+    .from("accounts")
+    .delete()
+    .eq("id", accountId)
+    .eq("user_id", userId);
   assertNoError(error);
 }
 
@@ -204,6 +229,7 @@ export async function createTransaction(userId: string, input: TransactionInput)
 }
 
 export async function updateTransaction(
+  userId: string,
   transactionId: string,
   input: TransactionInput,
 ) {
@@ -215,16 +241,18 @@ export async function updateTransaction(
       notes: input.notes || null,
       payment_method: input.payment_method || null,
     })
-    .eq("id", transactionId);
+    .eq("id", transactionId)
+    .eq("user_id", userId);
 
   assertNoError(error);
 }
 
-export async function deleteTransaction(transactionId: string) {
+export async function deleteTransaction(userId: string, transactionId: string) {
   const { error } = await supabase
     .from("transactions")
     .delete()
-    .eq("id", transactionId);
+    .eq("id", transactionId)
+    .eq("user_id", userId);
 
   assertNoError(error);
 }
