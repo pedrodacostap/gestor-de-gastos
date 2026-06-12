@@ -47,6 +47,52 @@ export type Database = {
         };
         Relationships: [];
       };
+      budget_history: {
+        Row: {
+          budget_amount: number;
+          budget_id: string | null;
+          category_id: string | null;
+          created_at: string;
+          id: string;
+          month: string;
+          used_amount: number;
+          user_id: string;
+        };
+        Insert: {
+          budget_amount: number;
+          budget_id?: string | null;
+          category_id?: string | null;
+          created_at?: string;
+          id?: string;
+          month: string;
+          used_amount?: number;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["budget_history"]["Insert"]>;
+        Relationships: [];
+      };
+      budgets: {
+        Row: {
+          amount: number;
+          category_id: string;
+          created_at: string;
+          id: string;
+          month: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          category_id: string;
+          created_at?: string;
+          id?: string;
+          month: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["budgets"]["Insert"]>;
+        Relationships: [];
+      };
       categories: {
         Row: {
           color: string | null;
@@ -391,6 +437,64 @@ export type Database = {
         };
         Relationships: [];
       };
+      subscription_charges: {
+        Row: {
+          account_id: string | null;
+          amount: number;
+          category_id: string | null;
+          charge_date: string;
+          created_at: string;
+          id: string;
+          status: "pending" | "paid" | "cancelled";
+          subscription_id: string;
+          transaction_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          account_id?: string | null;
+          amount: number;
+          category_id?: string | null;
+          charge_date: string;
+          created_at?: string;
+          id?: string;
+          status?: "pending" | "paid" | "cancelled";
+          subscription_id: string;
+          transaction_id?: string | null;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["subscription_charges"]["Insert"]>;
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: {
+          account_id: string | null;
+          amount: number;
+          billing_day: number;
+          category_id: string | null;
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          recurrence: "monthly" | "quarterly" | "yearly";
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          account_id?: string | null;
+          amount: number;
+          billing_day: number;
+          category_id?: string | null;
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          recurrence?: "monthly" | "quarterly" | "yearly";
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["subscriptions"]["Insert"]>;
+        Relationships: [];
+      };
       transactions: {
         Row: {
           account_id: string;
@@ -445,6 +549,8 @@ export type Database = {
 };
 
 export type Account = Database["public"]["Tables"]["accounts"]["Row"];
+export type Budget = Database["public"]["Tables"]["budgets"]["Row"];
+export type BudgetHistory = Database["public"]["Tables"]["budget_history"]["Row"];
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
 export type CreditCard = Database["public"]["Tables"]["credit_cards"]["Row"];
 export type CreditCardInstallment =
@@ -459,4 +565,7 @@ export type EmergencyReserveSettings =
   Database["public"]["Tables"]["emergency_reserve_settings"]["Row"];
 export type Goal = Database["public"]["Tables"]["goals"]["Row"];
 export type GoalMovement = Database["public"]["Tables"]["goal_movements"]["Row"];
+export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
+export type SubscriptionCharge =
+  Database["public"]["Tables"]["subscription_charges"]["Row"];
 export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
