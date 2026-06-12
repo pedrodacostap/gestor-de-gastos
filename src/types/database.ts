@@ -236,6 +236,140 @@ export type Database = {
         };
         Relationships: [];
       };
+      debts: {
+        Row: {
+          created_at: string;
+          creditor: string | null;
+          due_day: number;
+          id: string;
+          installment_amount: number;
+          installments_count: number;
+          monthly_interest_rate: number;
+          name: string;
+          original_amount: number;
+          remaining_balance: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          creditor?: string | null;
+          due_day: number;
+          id?: string;
+          installment_amount?: number;
+          installments_count?: number;
+          monthly_interest_rate?: number;
+          name: string;
+          original_amount?: number;
+          remaining_balance?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["debts"]["Insert"]>;
+        Relationships: [];
+      };
+      debt_payments: {
+        Row: {
+          account_id: string | null;
+          amount: number;
+          created_at: string;
+          debt_id: string;
+          id: string;
+          notes: string | null;
+          payment_date: string;
+          transaction_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          account_id?: string | null;
+          amount: number;
+          created_at?: string;
+          debt_id: string;
+          id?: string;
+          notes?: string | null;
+          payment_date?: string;
+          transaction_id?: string | null;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["debt_payments"]["Insert"]>;
+        Relationships: [];
+      };
+      emergency_reserve_settings: {
+        Row: {
+          created_at: string;
+          id: string;
+          linked_goal_id: string | null;
+          target_months: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          linked_goal_id?: string | null;
+          target_months?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["emergency_reserve_settings"]["Insert"]>;
+        Relationships: [];
+      };
+      goal_movements: {
+        Row: {
+          account_id: string | null;
+          amount: number;
+          created_at: string;
+          goal_id: string;
+          id: string;
+          movement_date: string;
+          notes: string | null;
+          transaction_id: string | null;
+          type: "deposit" | "withdrawal";
+          user_id: string;
+        };
+        Insert: {
+          account_id?: string | null;
+          amount: number;
+          created_at?: string;
+          goal_id: string;
+          id?: string;
+          movement_date?: string;
+          notes?: string | null;
+          transaction_id?: string | null;
+          type: "deposit" | "withdrawal";
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["goal_movements"]["Insert"]>;
+        Relationships: [];
+      };
+      goals: {
+        Row: {
+          color: string | null;
+          created_at: string;
+          current_amount: number;
+          icon: string | null;
+          id: string;
+          name: string;
+          target_amount: number;
+          target_date: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          color?: string | null;
+          created_at?: string;
+          current_amount?: number;
+          icon?: string | null;
+          id?: string;
+          name: string;
+          target_amount?: number;
+          target_date?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["goals"]["Insert"]>;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -319,4 +453,10 @@ export type CreditCardInvoicePayment =
   Database["public"]["Tables"]["credit_card_invoice_payments"]["Row"];
 export type CreditCardPurchase =
   Database["public"]["Tables"]["credit_card_purchases"]["Row"];
+export type Debt = Database["public"]["Tables"]["debts"]["Row"];
+export type DebtPayment = Database["public"]["Tables"]["debt_payments"]["Row"];
+export type EmergencyReserveSettings =
+  Database["public"]["Tables"]["emergency_reserve_settings"]["Row"];
+export type Goal = Database["public"]["Tables"]["goals"]["Row"];
+export type GoalMovement = Database["public"]["Tables"]["goal_movements"]["Row"];
 export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];

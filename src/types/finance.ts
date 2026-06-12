@@ -1,4 +1,5 @@
 import type { Account, Category, Transaction, TransactionType } from "./database";
+import type { PlanningDashboardSummary } from "./planning";
 
 export type AccountWithBalance = Account & {
   current_balance: number;
@@ -64,6 +65,7 @@ export type DashboardData = {
   cardOpenInvoicesTotal: number;
   cardNextDueDate: string | null;
   cardUsedLimitPercent: number;
+  planning: PlanningDashboardSummary;
   monthlyEvolution: Array<{
     expenses: number;
     income: number;

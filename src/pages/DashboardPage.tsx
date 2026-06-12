@@ -7,6 +7,8 @@ import {
   PiggyBank,
   Plus,
   ReceiptText,
+  ShieldAlert,
+  Target,
   TrendingUp,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -48,6 +50,20 @@ const emptyDashboard: DashboardData = {
   cardNextDueDate: null,
   cardOpenInvoicesTotal: 0,
   cardUsedLimitPercent: 0,
+  planning: {
+    debt_alerts: [],
+    emergency_reserve: {
+      current_amount: 0,
+      linked_goal: null,
+      monthly_expense_average: 0,
+      months_covered: 0,
+      progress_percent: 0,
+      recommended_amount: 0,
+      settings: null,
+    },
+    top_goals: [],
+    total_debt: 0,
+  },
   largestExpenses: [],
   monthlyEvolution: [],
   monthResult: 0,
@@ -294,6 +310,82 @@ export function DashboardPage() {
               value={`${Math.round(data.cardUsedLimitPercent)}%`}
               helper="Compras pendentes sobre o limite total"
             />
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <Card tone="elevated">
+              <div className="mb-5 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Principais metas</h2>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Progresso dos objetivos financeiros.
+                  </p>
+                </div>
+                <Target className="h-5 w-5 text-sky-300" />
+              </div>
+              {data.planning.top_goals.length === 0 ? (
+                <p className="rounded-lg border border-white/10 bg-white/8 p-4 text-sm text-zinc-300">
+                  Nenhuma meta cadastrada.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {data.planning.top_goals.map((goal) => (
+                    <div key={goal.id}>
+                      <div className="mb-2 flex justify-between gap-4 text-sm">
+                        <span className="text-zinc-200">{goal.icon} {goal.name}</span>
+                        <span className="font-medium text-white">
+                          {Math.round(goal.progress_percent)}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/10">
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            background: goal.color ?? "#0a84ff",
+                            width: `${goal.progress_percent}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card tone="elevated">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Badge tone="orange">Dívidas</Badge>
+                  <p className="mt-4 text-2xl font-semibold text-white">
+                    {formatCurrency(data.planning.total_debt)}
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-400">Saldo restante total</p>
+                </div>
+                <div>
+                  <Badge tone="green">Reserva</Badge>
+                  <p className="mt-4 text-2xl font-semibold text-white">
+                    {data.planning.emergency_reserve.months_covered.toFixed(1)} meses
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {formatCurrency(data.planning.emergency_reserve.current_amount)} de{" "}
+                    {formatCurrency(data.planning.emergency_reserve.recommended_amount)}
+                  </p>
+                </div>
+              </div>
+              {data.planning.debt_alerts.length > 0 && (
+                <div className="mt-5 space-y-2">
+                  {data.planning.debt_alerts.map((alert) => (
+                    <p
+                      className="flex gap-2 rounded-lg bg-amber-400/10 p-3 text-sm text-amber-100"
+                      key={alert.description}
+                    >
+                      <ShieldAlert className="h-4 w-4 shrink-0" />
+                      {alert.description}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </Card>
           </section>
 
           {data.alerts.length > 0 && (

@@ -5,6 +5,7 @@ import {
 } from "../lib/dates";
 import { supabase } from "../lib/supabase/client";
 import { getCreditCardDashboardSummary } from "./creditCardService";
+import { getPlanningDashboardSummary } from "./planningService";
 import type { Account, Category, Transaction } from "../types/database";
 import type {
   AccountInput,
@@ -256,6 +257,7 @@ export async function getDashboardData(
     { data: evolutionTransactions, error: evolutionError },
     { data: categories, error: categoriesError },
     cardSummary,
+    planningSummary,
   ] = await Promise.all([
     supabase.from("accounts").select("*").eq("user_id", userId),
     supabase.from("transactions").select("*").eq("user_id", userId),
@@ -275,6 +277,7 @@ export async function getDashboardData(
       .lte("transaction_date", endDate),
     supabase.from("categories").select("*").eq("user_id", userId),
     getCreditCardDashboardSummary(userId),
+    getPlanningDashboardSummary(userId),
   ]);
 
   assertNoError(accountsError);
@@ -415,6 +418,7 @@ export async function getDashboardData(
     cardOpenInvoicesTotal: cardSummary.open_invoices_total,
     cardNextDueDate: cardSummary.next_due_date,
     cardUsedLimitPercent: cardSummary.used_limit_percent,
+    planning: planningSummary,
     monthlyEvolution,
     monthResult,
     recentTransactions: attachRelations(
