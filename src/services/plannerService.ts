@@ -13,7 +13,6 @@ import type {
   Debt,
   Goal,
   Subscription,
-  SubscriptionCharge,
   Transaction,
 } from "../types/database";
 import type {
