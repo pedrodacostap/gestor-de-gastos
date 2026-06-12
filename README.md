@@ -1,73 +1,165 @@
-# React + TypeScript + Vite
+# Gestor de Gastos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicativo financeiro em React para organizar gastos, contas, cartões, metas e
+planejamento pessoal.
 
-Currently, two official plugins are available:
+O projeto está na Sprint 3: Supabase e autenticação. A aplicação já possui
+cliente Supabase, sessão persistente, contexto de autenticação, rotas protegidas
+e telas públicas para login, cadastro e recuperação de senha.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tecnologias
 
-## React Compiler
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- Supabase
+- Lucide React
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Requisitos
 
-## Expanding the ESLint configuration
+- Node.js 20 ou superior
+- npm
+- Projeto Supabase
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Como rodar localmente
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Instale as dependências:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Crie o arquivo `.env` a partir do exemplo:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
 ```
+
+Preencha as variáveis:
+
+```bash
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon-publica
+```
+
+Inicie o servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Valide o build de produção:
+
+```bash
+npm run build
+```
+
+Execute o lint:
+
+```bash
+npm run lint
+```
+
+## Supabase
+
+A migration inicial está em:
+
+```txt
+supabase/migrations/001_create_profiles.sql
+```
+
+Ela cria:
+
+- tabela `profiles`
+- campos `id`, `email`, `created_at`, `updated_at`
+- trigger para atualizar `updated_at`
+- trigger para criar perfil ao cadastrar usuário em `auth.users`
+- RLS em `profiles`
+- policy para cada usuário ler apenas o próprio perfil
+- policy para cada usuário atualizar apenas o próprio perfil
+
+## Estrutura atual
+
+```txt
+src/
+  app/
+    navigation.ts
+    routes.tsx
+  components/
+    auth/
+    layout/
+    ui/
+  context/
+    auth/
+  lib/
+    supabase/
+  pages/
+    auth/
+  styles/
+  types/
+supabase/
+  migrations/
+```
+
+## Rotas de autenticação
+
+- `/login`
+- `/cadastro`
+- `/recuperar-senha`
+
+## Rotas protegidas
+
+Todas as rotas principais do app exigem sessão ativa:
+
+- `/`
+- `/transacoes`
+- `/contas`
+- `/cartoes`
+- `/metas`
+- `/dividas`
+- `/calendario`
+- `/assinaturas`
+- `/orcamentos`
+- `/configuracoes`
+
+## Design System
+
+Componentes disponíveis:
+
+- Button
+- Input
+- Card
+- Modal
+- Dialog
+- Select
+- Badge
+- EmptyState
+- LoadingState
+
+## Escopo atual
+
+Implementado:
+
+- Cliente Supabase
+- `.env.example`
+- Login
+- Cadastro
+- Logout
+- Recuperação de senha
+- Sessão persistente
+- Contexto de autenticação
+- Rotas protegidas
+- Redirecionamento automático
+- Tabela `profiles` via SQL
+- RLS para isolamento por usuário
+
+Ainda não implementado:
+
+- Contas
+- Transações
+- Cartões
+- Metas
+- Calendário financeiro
+- PWA
