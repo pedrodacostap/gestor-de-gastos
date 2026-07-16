@@ -4,11 +4,13 @@ import { navigationItems } from "../app/navigation";
 import { PageFrame } from "../components/layout/PageFrame";
 
 const morePaths = new Set([
+  "/relatorios",
   "/cartoes",
   "/dividas",
   "/calendario",
   "/assinaturas",
   "/orcamentos",
+  "/planejamento",
   "/configuracoes",
 ]);
 

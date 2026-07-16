@@ -1,6 +1,8 @@
 import {
   BadgeDollarSign,
+  BarChart3,
   CalendarDays,
+  CalendarClock,
   CreditCard,
   Gauge,
   Landmark,
@@ -24,6 +26,12 @@ export const navigationItems = [
     icon: ReceiptText,
     label: "Transações",
     path: "/transacoes",
+  },
+  {
+    description: "Análises e arquivos em PDF ou Excel.",
+    icon: BarChart3,
+    label: "Relatórios",
+    path: "/relatorios",
   },
   {
     description: "Contas bancárias e carteiras.",
@@ -68,6 +76,12 @@ export const navigationItems = [
     path: "/orcamentos",
   },
   {
+    description: "Recorrências, lembretes e previsão.",
+    icon: CalendarClock,
+    label: "Planejamento",
+    path: "/planejamento",
+  },
+  {
     description: "Preferências do aplicativo.",
     icon: Settings,
     label: "Configurações",
@@ -78,8 +92,8 @@ export const navigationItems = [
 export const mobileNavigationItems = [
   navigationItems[0],
   navigationItems[1],
-  navigationItems[2],
-  navigationItems[4],
+  navigationItems[3],
+  navigationItems[5],
   {
     description: "Mais áreas do app.",
     icon: ListChecks,

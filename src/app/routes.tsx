@@ -50,6 +50,16 @@ const MorePage = lazy(() =>
     default: module.MorePage,
   })),
 );
+const PlanningPage = lazy(() =>
+  import("../pages/PlanningPage").then((module) => ({
+    default: module.PlanningPage,
+  })),
+);
+const ReportsPage = lazy(() =>
+  import("../pages/ReportsPage").then((module) => ({
+    default: module.ReportsPage,
+  })),
+);
 const ResetPasswordPage = lazy(() =>
   import("../pages/auth/ResetPasswordPage").then((module) => ({
     default: module.ResetPasswordPage,
@@ -122,6 +132,7 @@ export function AppRoutes() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="transacoes" element={<TransactionsPage />} />
+          <Route path="relatorios" element={<ReportsPage />} />
           <Route path="contas" element={<AccountsPage />} />
           <Route path="cartoes" element={<CardsPage />} />
           <Route path="metas" element={<GoalsPage />} />
@@ -129,6 +140,7 @@ export function AppRoutes() {
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="assinaturas" element={<SubscriptionsPage />} />
           <Route path="orcamentos" element={<BudgetsPage />} />
+          <Route path="planejamento" element={<PlanningPage />} />
           <Route path="mais" element={<MorePage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
         </Route>
