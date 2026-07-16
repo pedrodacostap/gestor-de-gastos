@@ -1,9 +1,9 @@
 import {
-  addMonths,
   getCurrentMonthValue,
   getInvoiceDueDate,
   getMonthRange,
 } from "../lib/dates";
+import { getNextSubscriptionChargeDate } from "../lib/subscriptionRules";
 import { supabase } from "../lib/supabase/client";
 import type {
   Budget,
@@ -59,34 +59,20 @@ function normalizeMonth(date: string) {
   return date.slice(0, 7);
 }
 
-function nextBillingDate(
-  subscription: Pick<Subscription, "billing_day" | "recurrence">,
-) {
-  const currentMonth = getCurrentMonthValue();
-  const today = new Date().toISOString().slice(0, 10);
-  let date = getInvoiceDueDate(currentMonth, subscription.billing_day);
-
-  if (date < today) {
-    const step =
-      subscription.recurrence === "yearly"
-        ? 12
-        : subscription.recurrence === "quarterly"
-          ? 3
-          : 1;
-    date = getInvoiceDueDate(addMonths(currentMonth, step), subscription.billing_day);
-  }
-
-  return date;
-}
-
 function attachSubscriptionSummary(
   subscriptions: Subscription[],
   categories: Category[],
+  charges: SubscriptionCharge[],
 ): SubscriptionWithSummary[] {
   const today = new Date();
 
   return subscriptions.map((subscription) => {
-    const nextDate = nextBillingDate(subscription);
+    const lastChargeDate = charges
+      .filter((charge) => charge.subscription_id === subscription.id)
+      .map((charge) => charge.charge_date)
+      .sort()
+      .at(-1);
+    const nextDate = getNextSubscriptionChargeDate(subscription, lastChargeDate);
     const diffDays = Math.ceil(
       (new Date(`${nextDate}T00:00:00`).getTime() - today.getTime()) /
         (1000 * 60 * 60 * 24),
@@ -243,8 +229,12 @@ export async function listPlannerData(
 
   const safeCategories = categories ?? [];
   const safeTransactions = transactions ?? [];
-  const safeSubscriptions = attachSubscriptionSummary(subscriptions ?? [], safeCategories);
   const safeSubscriptionCharges: SubscriptionCharge[] = charges ?? [];
+  const safeSubscriptions = attachSubscriptionSummary(
+    subscriptions ?? [],
+    safeCategories,
+    safeSubscriptionCharges,
+  );
   const budgetsWithUsage = buildBudgetUsage(
     budgets ?? [],
     safeCategories,
@@ -323,37 +313,18 @@ export async function createSubscriptionCharge(
   userId: string,
   subscription: SubscriptionWithSummary,
 ) {
-  let transactionId: string | null = null;
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("create_subscription_charge", {
+    p_charge_date: subscription.next_charge_date,
+    p_subscription_id: subscription.id,
+  });
+  assertNoError(error);
+}
 
-  if (subscription.account_id) {
-    const { data: transaction, error: transactionError } = await supabase
-      .from("transactions")
-      .insert({
-        account_id: subscription.account_id,
-        amount: Number(subscription.amount),
-        category_id: subscription.category_id,
-        notes: `Cobrança automática de ${subscription.name}`,
-        payment_method: "subscription",
-        title: subscription.name,
-        transaction_date: subscription.next_charge_date,
-        type: "expense",
-        user_id: userId,
-      })
-      .select("*")
-      .single();
-    assertNoError(transactionError);
-    transactionId = transaction?.id ?? null;
-  }
-
-  const { error } = await supabase.from("subscription_charges").insert({
-    account_id: subscription.account_id,
-    amount: Number(subscription.amount),
-    category_id: subscription.category_id,
-    charge_date: subscription.next_charge_date,
-    status: transactionId ? "paid" : "pending",
-    subscription_id: subscription.id,
-    transaction_id: transactionId,
-    user_id: userId,
+export async function reverseSubscriptionCharge(userId: string, chargeId: string) {
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("reverse_subscription_charge", {
+    p_charge_id: chargeId,
   });
   assertNoError(error);
 }

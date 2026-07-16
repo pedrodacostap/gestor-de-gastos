@@ -216,64 +216,23 @@ export async function updateGoal(userId: string, goalId: string, input: GoalInpu
 }
 
 export async function deleteGoal(userId: string, goalId: string) {
-  const { error } = await supabase
-    .from("goals")
-    .delete()
-    .eq("id", goalId)
-    .eq("user_id", userId);
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("delete_goal_safely", {
+    p_goal_id: goalId,
+  });
   assertNoError(error);
 }
 
 export async function createGoalMovement(userId: string, input: GoalMovementInput) {
-  const { data: goal, error: goalError } = await supabase
-    .from("goals")
-    .select("*")
-    .eq("id", input.goal_id)
-    .eq("user_id", userId)
-    .single();
-  assertNoError(goalError);
+  if (!userId) throw new Error("Usuário não autenticado.");
 
-  const transactionType = input.type === "deposit" ? "expense" : "income";
-  const title = `${input.type === "deposit" ? "Aporte em" : "Retirada de"} meta: ${goal?.name ?? ""}`;
-  let transactionId: string | null = null;
-
-  if (input.account_id) {
-    const { data: transaction, error: transactionError } = await supabase
-      .from("transactions")
-      .insert({
-        account_id: input.account_id,
-        amount: input.amount,
-        category_id: null,
-        notes: input.notes || null,
-        payment_method: "goal_movement",
-        title,
-        transaction_date: input.movement_date,
-        type: transactionType,
-        user_id: userId,
-      })
-      .select("*")
-      .single();
-    assertNoError(transactionError);
-    transactionId = transaction?.id ?? null;
-  }
-
-  const nextAmount =
-    Number(goal?.current_amount ?? 0) +
-    (input.type === "deposit" ? input.amount : -input.amount);
-
-  const { error: updateError } = await supabase
-    .from("goals")
-    .update({ current_amount: Math.max(nextAmount, 0) })
-    .eq("id", input.goal_id)
-    .eq("user_id", userId);
-  assertNoError(updateError);
-
-  const { error } = await supabase.from("goal_movements").insert({
-    ...input,
-    account_id: input.account_id || null,
-    notes: input.notes || null,
-    transaction_id: transactionId,
-    user_id: userId,
+  const { error } = await supabase.rpc("create_goal_movement", {
+    p_account_id: input.account_id || null,
+    p_amount: input.amount,
+    p_goal_id: input.goal_id,
+    p_movement_date: input.movement_date,
+    p_notes: input.notes || null,
+    p_type: input.type,
   });
   assertNoError(error);
 }
@@ -297,56 +256,22 @@ export async function updateDebt(userId: string, debtId: string, input: DebtInpu
 }
 
 export async function deleteDebt(userId: string, debtId: string) {
-  const { error } = await supabase
-    .from("debts")
-    .delete()
-    .eq("id", debtId)
-    .eq("user_id", userId);
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("delete_debt_safely", {
+    p_debt_id: debtId,
+  });
   assertNoError(error);
 }
 
 export async function createDebtPayment(userId: string, input: DebtPaymentInput) {
-  const { data: debt, error: debtError } = await supabase
-    .from("debts")
-    .select("*")
-    .eq("id", input.debt_id)
-    .eq("user_id", userId)
-    .single();
-  assertNoError(debtError);
+  if (!userId) throw new Error("Usuário não autenticado.");
 
-  const paymentAmount = Math.min(input.amount, Number(debt?.remaining_balance ?? input.amount));
-
-  const { data: transaction, error: transactionError } = await supabase
-    .from("transactions")
-    .insert({
-      account_id: input.account_id,
-      amount: paymentAmount,
-      category_id: null,
-      notes: input.notes || null,
-      payment_method: "debt_payment",
-      title: `Pagamento dívida: ${debt?.name ?? ""}`,
-      transaction_date: input.payment_date,
-      type: "expense",
-      user_id: userId,
-    })
-    .select("*")
-    .single();
-  assertNoError(transactionError);
-
-  const nextBalance = Math.max(Number(debt?.remaining_balance ?? 0) - paymentAmount, 0);
-  const { error: updateError } = await supabase
-    .from("debts")
-    .update({ remaining_balance: nextBalance })
-    .eq("id", input.debt_id)
-    .eq("user_id", userId);
-  assertNoError(updateError);
-
-  const { error } = await supabase.from("debt_payments").insert({
-    ...input,
-    amount: paymentAmount,
-    notes: input.notes || null,
-    transaction_id: transaction?.id ?? null,
-    user_id: userId,
+  const { error } = await supabase.rpc("create_debt_payment", {
+    p_account_id: input.account_id,
+    p_amount: input.amount,
+    p_debt_id: input.debt_id,
+    p_notes: input.notes || null,
+    p_payment_date: input.payment_date,
   });
   assertNoError(error);
 }

@@ -122,6 +122,16 @@ export function GoalsPage() {
     }
   }
 
+  async function handleDeleteGoal(goalId: string) {
+    if (!user || !window.confirm("Excluir esta meta?")) return;
+    try {
+      await deleteGoal(user.id, goalId);
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao excluir meta.");
+    }
+  }
+
   async function handleReserveChange(targetMonths: number, goalId: string) {
     if (!user) return;
     try {
@@ -203,7 +213,7 @@ export function GoalsPage() {
                 </div>
                 <div className="flex gap-1">
                   <Button onClick={() => openGoal(goal.id)} size="sm" variant="ghost"><Edit2 className="h-4 w-4" /></Button>
-                  <Button onClick={() => user && deleteGoal(user.id, goal.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                  <Button onClick={() => handleDeleteGoal(goal.id)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <p className="mt-5 text-2xl font-semibold text-white">
@@ -252,7 +262,7 @@ export function GoalsPage() {
         <form className="space-y-4" onSubmit={handleMovementSubmit}>
           <Select label="Conta" options={[{ label: "Sem transação", value: "" }, ...data.accounts.map((account) => ({ label: account.name, value: account.id }))]} value={movementForm.account_id ?? ""} onChange={(event) => setMovementForm((current) => ({ ...current, account_id: event.target.value }))} />
           <Input label="Valor" type="number" step="0.01" value={movementForm.amount} onChange={(event) => setMovementForm((current) => ({ ...current, amount: Number(event.target.value) }))} />
-          <Input label="Data" type="date" value={movementForm.movement_date} onChange={(event) => setMovementForm((current) => ({ ...current, movement_date: event.target.value }))} />
+          <Input label="Data" max={getTodayValue()} type="date" value={movementForm.movement_date} onChange={(event) => setMovementForm((current) => ({ ...current, movement_date: event.target.value }))} />
           <Button isFullWidth type="submit"><PiggyBank className="h-4 w-4" />Salvar movimento</Button>
         </form>
       </Modal>

@@ -3,6 +3,7 @@ import {
   getMonthRange,
   getRecentMonths,
 } from "../lib/dates";
+import { calculateAccountBalance } from "../lib/financialRules";
 import { supabase } from "../lib/supabase/client";
 import { getCreditCardDashboardSummary } from "./creditCardService";
 import { getPlanningDashboardSummary } from "./planningService";
@@ -48,14 +49,6 @@ function assertNoError(error: unknown) {
   throw new Error("Não foi possível concluir a operação.");
 }
 
-function calculateAccountBalance(account: Account, transactions: Transaction[]) {
-  return transactions.reduce((balance, transaction) => {
-    return transaction.type === "income"
-      ? balance + Number(transaction.amount)
-      : balance - Number(transaction.amount);
-  }, Number(account.initial_balance));
-}
-
 function attachRelations(
   transactions: Transaction[],
   accounts: Account[],
@@ -90,7 +83,10 @@ export async function listAccounts(userId: string): Promise<AccountWithBalance[]
 
     return {
       ...account,
-      current_balance: calculateAccountBalance(account, accountTransactions),
+      current_balance: calculateAccountBalance(
+        Number(account.initial_balance),
+        accountTransactions,
+      ),
       transaction_count: accountTransactions.length,
     };
   });
@@ -324,7 +320,7 @@ export async function getDashboardData(
     (total, account) =>
       total +
       calculateAccountBalance(
-        account,
+        Number(account.initial_balance),
         safeAllTransactions.filter(
           (transaction) => transaction.account_id === account.id,
         ),

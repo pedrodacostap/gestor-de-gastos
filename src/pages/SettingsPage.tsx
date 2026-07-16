@@ -1,47 +1,40 @@
 import { LogOut, Save, Settings } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { SupabaseDiagnostics } from "../components/diagnostics/SupabaseDiagnostics";
-import { Button, Card, Input, Select } from "../components/ui";
+import { Button, Card, Select } from "../components/ui";
 import { PageFrame } from "../components/layout/PageFrame";
 import { useAuth } from "../context/auth/useAuth";
 
 type Preferences = {
   currency: string;
-  profileName: string;
-  theme: "dark" | "light" | "system";
 };
 
 const storageKey = "gestor-de-gastos:preferences";
 const defaultPreferences: Preferences = {
   currency: "BRL",
-  profileName: "Gestor de Gastos",
-  theme: "dark",
 };
 
-function applyTheme(theme: Preferences["theme"]) {
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const shouldUseDark = theme === "dark" || (theme === "system" && prefersDark);
-  document.documentElement.classList.toggle("dark", shouldUseDark);
+function loadPreferences() {
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    return saved
+      ? ({ ...defaultPreferences, ...JSON.parse(saved) } as Preferences)
+      : defaultPreferences;
+  } catch {
+    return defaultPreferences;
+  }
 }
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const [form, setForm] = useState<Preferences>(() => {
-    const saved = window.localStorage.getItem(storageKey);
-    return saved ? ({ ...defaultPreferences, ...JSON.parse(saved) } as Preferences) : defaultPreferences;
-  });
+  const [form, setForm] = useState<Preferences>(loadPreferences);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    applyTheme(form.theme);
-  }, [form.theme]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     window.localStorage.setItem(storageKey, JSON.stringify(form));
-    applyTheme(form.theme);
     setMessage("Preferências salvas com sucesso.");
   }
 
@@ -77,21 +70,6 @@ export function SettingsPage() {
         </div>
 
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
-          <Input
-            label="Nome do usuário"
-            onChange={(event) => setForm((current) => ({ ...current, profileName: event.target.value }))}
-            value={form.profileName}
-          />
-          <Select
-            label="Tema"
-            onChange={(event) => setForm((current) => ({ ...current, theme: event.target.value as Preferences["theme"] }))}
-            options={[
-              { label: "Escuro", value: "dark" },
-              { label: "Claro", value: "light" },
-              { label: "Sistema", value: "system" },
-            ]}
-            value={form.theme}
-          />
           <Select
             label="Moeda"
             onChange={(event) => setForm((current) => ({ ...current, currency: event.target.value }))}
