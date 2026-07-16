@@ -375,6 +375,36 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["emergency_reserve_settings"]["Insert"]>;
         Relationships: [];
       };
+      financial_reminders: {
+        Row: {
+          amount: number | null;
+          completed_at: string | null;
+          created_at: string;
+          due_date: string;
+          id: string;
+          kind: "manual" | "bill" | "goal" | "tax" | "other";
+          notes: string | null;
+          status: "pending" | "completed" | "dismissed";
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number | null;
+          completed_at?: string | null;
+          created_at?: string;
+          due_date: string;
+          id?: string;
+          kind?: "manual" | "bill" | "goal" | "tax" | "other";
+          notes?: string | null;
+          status?: "pending" | "completed" | "dismissed";
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["financial_reminders"]["Insert"]>;
+        Relationships: [];
+      };
       goal_movements: {
         Row: {
           account_id: string | null;
@@ -450,6 +480,68 @@ export type Database = {
           id?: string;
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      recurring_transaction_occurrences: {
+        Row: {
+          created_at: string;
+          due_date: string;
+          id: string;
+          recurring_transaction_id: string;
+          transaction_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          due_date: string;
+          id?: string;
+          recurring_transaction_id: string;
+          transaction_id: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recurring_transaction_occurrences"]["Insert"]>;
+        Relationships: [];
+      };
+      recurring_transactions: {
+        Row: {
+          account_id: string;
+          amount: number;
+          category_id: string | null;
+          created_at: string;
+          end_date: string | null;
+          frequency: "weekly" | "monthly" | "yearly";
+          id: string;
+          interval_count: number;
+          is_active: boolean;
+          next_due_date: string;
+          notes: string | null;
+          payment_method: string | null;
+          start_date: string;
+          title: string;
+          type: TransactionType;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          account_id: string;
+          amount: number;
+          category_id?: string | null;
+          created_at?: string;
+          end_date?: string | null;
+          frequency: "weekly" | "monthly" | "yearly";
+          id?: string;
+          interval_count?: number;
+          is_active?: boolean;
+          next_due_date: string;
+          notes?: string | null;
+          payment_method?: string | null;
+          start_date: string;
+          title: string;
+          type: TransactionType;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recurring_transactions"]["Insert"]>;
         Relationships: [];
       };
       subscription_charges: {
@@ -558,6 +650,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      delete_recurring_transaction_safely: {
+        Args: { p_recurring_transaction_id: string };
+        Returns: undefined;
+      };
       create_credit_card_purchase: {
         Args: {
           p_card_id: string;
@@ -620,12 +716,20 @@ export type Database = {
         };
         Returns: string;
       };
+      process_due_recurring_transactions: {
+        Args: { p_until_date?: string };
+        Returns: number;
+      };
       rebuild_credit_card_installments: {
         Args: { p_purchase_id: string };
         Returns: undefined;
       };
       reverse_credit_card_invoice_payment: {
         Args: { p_payment_id: string };
+        Returns: undefined;
+      };
+      reverse_recurring_transaction_occurrence: {
+        Args: { p_occurrence_id: string };
         Returns: undefined;
       };
       reverse_subscription_charge: {
@@ -666,8 +770,14 @@ export type Debt = Database["public"]["Tables"]["debts"]["Row"];
 export type DebtPayment = Database["public"]["Tables"]["debt_payments"]["Row"];
 export type EmergencyReserveSettings =
   Database["public"]["Tables"]["emergency_reserve_settings"]["Row"];
+export type FinancialReminder =
+  Database["public"]["Tables"]["financial_reminders"]["Row"];
 export type Goal = Database["public"]["Tables"]["goals"]["Row"];
 export type GoalMovement = Database["public"]["Tables"]["goal_movements"]["Row"];
+export type RecurringTransaction =
+  Database["public"]["Tables"]["recurring_transactions"]["Row"];
+export type RecurringTransactionOccurrence =
+  Database["public"]["Tables"]["recurring_transaction_occurrences"]["Row"];
 export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
 export type SubscriptionCharge =
   Database["public"]["Tables"]["subscription_charges"]["Row"];

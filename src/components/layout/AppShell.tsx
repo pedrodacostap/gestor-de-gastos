@@ -87,7 +87,7 @@ export function AppShell() {
                 <Button aria-label="Pesquisar transações" onClick={() => navigate("/transacoes")} size="sm" variant="ghost">
                   <Search aria-hidden="true" className="h-5 w-5" />
                 </Button>
-                <Button aria-label="Ver calendário e alertas" onClick={() => navigate("/calendario")} size="sm" variant="ghost">
+                <Button aria-label="Ver planejamento e alertas" onClick={() => navigate("/planejamento")} size="sm" variant="ghost">
                   <Bell aria-hidden="true" className="h-5 w-5" />
                 </Button>
                 <Button aria-label="Sair" onClick={handleSignOut} size="sm" variant="ghost">
