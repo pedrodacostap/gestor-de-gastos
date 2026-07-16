@@ -2,7 +2,6 @@ import {
   addMonths,
   getCurrentMonthValue,
   getInvoiceDueDate,
-  getInvoiceMonth,
   getInvoiceMonthDate,
 } from "../lib/dates";
 import { supabase } from "../lib/supabase/client";
@@ -41,40 +40,8 @@ function assertNoError(error: unknown) {
   throw new Error("Não foi possível concluir a operação.");
 }
 
-function roundMoney(value: number) {
-  return Math.round(value * 100) / 100;
-}
-
 function normalizeMonth(monthDate: string) {
   return monthDate.slice(0, 7);
-}
-
-function buildInstallments(
-  userId: string,
-  purchaseId: string,
-  input: CreditCardPurchaseInput,
-  card: Pick<CreditCard, "closing_day">,
-) {
-  const count = Math.max(1, input.installments_count);
-  const baseAmount = roundMoney(input.total_amount / count);
-  const firstMonth = getInvoiceMonth(input.purchase_date, card.closing_day);
-
-  return Array.from({ length: count }, (_, index) => {
-    const amount =
-      index === count - 1
-        ? roundMoney(input.total_amount - baseAmount * (count - 1))
-        : baseAmount;
-
-    return {
-      amount,
-      card_id: input.card_id,
-      competence_month: getInvoiceMonthDate(addMonths(firstMonth, index)),
-      installment_number: index + 1,
-      purchase_id: purchaseId,
-      status: "pending" as const,
-      user_id: userId,
-    };
-  });
 }
 
 function attachPurchaseRelations(
@@ -298,36 +265,17 @@ export async function createCreditCardPurchase(
   userId: string,
   input: CreditCardPurchaseInput,
 ) {
-  const { data: card, error: cardError } = await supabase
-    .from("credit_cards")
-    .select("*")
-    .eq("id", input.card_id)
-    .single();
-
-  assertNoError(cardError);
-
-  const { data: purchase, error } = await supabase
-    .from("credit_card_purchases")
-    .insert({
-      ...input,
-      category_id: input.category_id || null,
-      notes: input.notes || null,
-      user_id: userId,
-    })
-    .select("*")
-    .single();
-
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("create_credit_card_purchase", {
+    p_card_id: input.card_id,
+    p_category_id: input.category_id || null,
+    p_description: input.description,
+    p_installments_count: input.installments_count,
+    p_notes: input.notes || null,
+    p_purchase_date: input.purchase_date,
+    p_total_amount: input.total_amount,
+  });
   assertNoError(error);
-
-  if (!purchase || !card) {
-    throw new Error("Não foi possível criar a compra.");
-  }
-
-  const { error: installmentError } = await supabase
-    .from("credit_card_installments")
-    .insert(buildInstallments(userId, purchase.id, input, card));
-
-  assertNoError(installmentError);
 }
 
 export async function updateCreditCardPurchase(
@@ -335,135 +283,44 @@ export async function updateCreditCardPurchase(
   userId: string,
   input: CreditCardPurchaseInput,
 ) {
-  const { data: existingInstallments, error: installmentReadError } = await supabase
-    .from("credit_card_installments")
-    .select("*")
-    .eq("purchase_id", purchaseId);
-
-  assertNoError(installmentReadError);
-
-  if ((existingInstallments ?? []).some((installment) => installment.status === "paid")) {
-    throw new Error("Esta compra tem parcelas pagas. Exclua o pagamento antes de editar.");
-  }
-
-  const { data: card, error: cardError } = await supabase
-    .from("credit_cards")
-    .select("*")
-    .eq("id", input.card_id)
-    .single();
-
-  assertNoError(cardError);
-
-  const { error } = await supabase
-    .from("credit_card_purchases")
-    .update({
-      ...input,
-      category_id: input.category_id || null,
-      notes: input.notes || null,
-    })
-    .eq("id", purchaseId);
-
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("update_credit_card_purchase", {
+    p_card_id: input.card_id,
+    p_category_id: input.category_id || null,
+    p_description: input.description,
+    p_installments_count: input.installments_count,
+    p_notes: input.notes || null,
+    p_purchase_date: input.purchase_date,
+    p_purchase_id: purchaseId,
+    p_total_amount: input.total_amount,
+  });
   assertNoError(error);
-
-  const { error: deleteInstallmentsError } = await supabase
-    .from("credit_card_installments")
-    .delete()
-    .eq("purchase_id", purchaseId);
-
-  assertNoError(deleteInstallmentsError);
-
-  if (!card) {
-    throw new Error("Cartão não encontrado.");
-  }
-
-  const { error: insertInstallmentsError } = await supabase
-    .from("credit_card_installments")
-    .insert(buildInstallments(userId, purchaseId, input, card));
-
-  assertNoError(insertInstallmentsError);
 }
 
 export async function deleteCreditCardPurchase(purchaseId: string) {
-  const { data: installments, error: installmentReadError } = await supabase
-    .from("credit_card_installments")
-    .select("*")
-    .eq("purchase_id", purchaseId);
-
-  assertNoError(installmentReadError);
-
-  if ((installments ?? []).some((installment) => installment.status === "paid")) {
-    throw new Error("Esta compra tem parcelas pagas. Remova o pagamento antes de excluir.");
-  }
-
-  const { error } = await supabase
-    .from("credit_card_purchases")
-    .delete()
-    .eq("id", purchaseId);
-
+  const { error } = await supabase.rpc("delete_credit_card_purchase", {
+    p_purchase_id: purchaseId,
+  });
   assertNoError(error);
 }
 
 export async function payCreditCardInvoice(userId: string, input: PayInvoiceInput) {
-  const { data: existingPayment, error: existingPaymentError } = await supabase
-    .from("credit_card_invoice_payments")
-    .select("*")
-    .eq("card_id", input.card_id)
-    .eq("invoice_month", getInvoiceMonthDate(input.invoice_month))
-    .maybeSingle();
+  if (!userId) throw new Error("Usuário não autenticado.");
+  const { error } = await supabase.rpc("pay_credit_card_invoice", {
+    p_account_id: input.account_id,
+    p_card_id: input.card_id,
+    p_expected_total: input.total,
+    p_invoice_month: getInvoiceMonthDate(input.invoice_month),
+    p_paid_at: input.paid_at,
+  });
+  assertNoError(error);
+}
 
-  assertNoError(existingPaymentError);
-
-  if (existingPayment) {
-    throw new Error("Esta fatura já foi paga.");
-  }
-
-  const { data: card, error: cardError } = await supabase
-    .from("credit_cards")
-    .select("*")
-    .eq("id", input.card_id)
-    .single();
-
-  assertNoError(cardError);
-
-  const { data: transaction, error: transactionError } = await supabase
-    .from("transactions")
-    .insert({
-      account_id: input.account_id,
-      amount: input.total,
-      category_id: null,
-      notes: `Pagamento da fatura ${input.invoice_month}`,
-      payment_method: "credit_card_invoice",
-      title: `Fatura ${card?.name ?? "cartão"} ${input.invoice_month}`,
-      transaction_date: input.paid_at.slice(0, 10),
-      type: "expense",
-      user_id: userId,
-    })
-    .select("*")
-    .single();
-
-  assertNoError(transactionError);
-
-  const { error: paymentError } = await supabase
-    .from("credit_card_invoice_payments")
-    .insert({
-      account_id: input.account_id,
-      amount: input.total,
-      card_id: input.card_id,
-      invoice_month: getInvoiceMonthDate(input.invoice_month),
-      paid_at: input.paid_at,
-      transaction_id: transaction?.id ?? null,
-      user_id: userId,
-    });
-
-  assertNoError(paymentError);
-
-  const { error: installmentsError } = await supabase
-    .from("credit_card_installments")
-    .update({ status: "paid" })
-    .eq("card_id", input.card_id)
-    .eq("competence_month", getInvoiceMonthDate(input.invoice_month));
-
-  assertNoError(installmentsError);
+export async function reverseCreditCardInvoicePayment(paymentId: string) {
+  const { error } = await supabase.rpc("reverse_credit_card_invoice_payment", {
+    p_payment_id: paymentId,
+  });
+  assertNoError(error);
 }
 
 export async function getCreditCardDashboardSummary(

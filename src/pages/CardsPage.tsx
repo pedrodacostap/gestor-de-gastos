@@ -24,6 +24,7 @@ import {
   deleteCreditCardPurchase,
   listCreditCardData,
   payCreditCardInvoice,
+  reverseCreditCardInvoicePayment,
   updateCreditCard,
   updateCreditCardPurchase,
 } from "../services/creditCardService";
@@ -288,6 +289,20 @@ export function CardsPage() {
     }
   }
 
+  async function handleReverseInvoicePayment(paymentId: string) {
+    if (!window.confirm("Desfazer este pagamento e devolver o valor ao saldo da conta?")) {
+      return;
+    }
+
+    try {
+      await reverseCreditCardInvoicePayment(paymentId);
+      await loadCards();
+      setMessage("Pagamento desfeito. A fatura voltou a ficar aberta.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao desfazer pagamento.");
+    }
+  }
+
   return (
     <PageFrame
       actions={
@@ -474,6 +489,16 @@ export function CardsPage() {
                                 >
                                   <CheckCircle2 className="h-4 w-4" />
                                   Pagar fatura
+                                </Button>
+                              )}
+                              {invoice.is_paid && invoice.payment && (
+                                <Button
+                                  className="mt-3"
+                                  onClick={() => handleReverseInvoicePayment(invoice.payment!.id)}
+                                  size="sm"
+                                  variant="danger"
+                                >
+                                  Desfazer pagamento
                                 </Button>
                               )}
                             </div>
@@ -736,6 +761,7 @@ export function CardsPage() {
                   purchase_date: event.target.value,
                 }))
               }
+              max={getTodayValue()}
               required
               type="date"
               value={purchaseForm.purchase_date}

@@ -45,6 +45,11 @@ const LoginPage = lazy(() =>
     default: module.LoginPage,
   })),
 );
+const MorePage = lazy(() =>
+  import("../pages/MorePage").then((module) => ({
+    default: module.MorePage,
+  })),
+);
 const ResetPasswordPage = lazy(() =>
   import("../pages/auth/ResetPasswordPage").then((module) => ({
     default: module.ResetPasswordPage,
@@ -73,7 +78,7 @@ const TransactionsPage = lazy(() =>
 
 function RouteFallback() {
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-4 text-white md:p-8">
+    <div className="min-h-dvh bg-[var(--app-bg)] p-4 text-white md:p-8">
       <LoadingState label="Carregando tela" />
     </div>
   );
@@ -124,6 +129,7 @@ export function AppRoutes() {
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="assinaturas" element={<SubscriptionsPage />} />
           <Route path="orcamentos" element={<BudgetsPage />} />
+          <Route path="mais" element={<MorePage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />

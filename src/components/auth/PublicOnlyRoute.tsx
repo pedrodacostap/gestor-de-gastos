@@ -12,7 +12,7 @@ export function PublicOnlyRoute({ children }: PublicOnlyRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[var(--app-bg)] p-4">
+      <div className="grid min-h-dvh place-items-center bg-[var(--app-bg)] p-4">
         <LoadingState label="Carregando autenticação" />
       </div>
     );

@@ -13,6 +13,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageFrame } from "../components/layout/PageFrame";
 import { Badge, Button, Card, EmptyState, Input, Modal, Select } from "../components/ui";
 import { getCurrentMonthValue, getTodayValue } from "../lib/dates";
@@ -73,6 +74,7 @@ const emptyCategory: CategoryInput = {
 
 export function TransactionsPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<AccountWithBalance[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<TransactionWithRelations[]>([]);
@@ -82,7 +84,9 @@ export function TransactionsPage() {
     createEmptyTransaction(),
   );
   const [categoryForm, setCategoryForm] = useState<CategoryInput>(emptyCategory);
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(
+    () => searchParams.get("novo") === "1",
+  );
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [month, setMonth] = useState(getCurrentMonthValue());
   const [type, setType] = useState<"all" | TransactionType>("all");

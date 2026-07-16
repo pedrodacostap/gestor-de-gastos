@@ -84,6 +84,6 @@ export const mobileNavigationItems = [
     description: "Mais áreas do app.",
     icon: ListChecks,
     label: "Mais",
-    path: "/configuracoes",
+    path: "/mais",
   },
 ];

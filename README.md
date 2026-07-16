@@ -36,6 +36,7 @@ Validação:
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
 
@@ -57,6 +58,8 @@ supabase/migrations/003_create_credit_cards.sql
 supabase/migrations/004_create_planning_core.sql
 supabase/migrations/005_create_calendar_subscriptions_budgets.sql
 supabase/migrations/006_repair_financial_core_rls.sql
+supabase/migrations/007_atomic_planning_movements.sql
+supabase/migrations/008_complete_financial_integrity.sql
 ```
 
 Pelo painel:
@@ -71,6 +74,12 @@ Com Supabase CLI:
 supabase link --project-ref SEU_PROJECT_REF
 supabase db push
 ```
+
+As operações que movimentam metas ou pagam dívidas usam funções atômicas da
+migrações `007` e `008`. A conta, o histórico e o saldo da meta/dívida/fatura
+são confirmados juntos; se qualquer etapa falhar, nenhuma alteração parcial é
+mantida. Transações geradas por metas, dívidas, faturas e assinaturas devem ser
+revertidas no módulo de origem.
 
 ## PWA
 
@@ -105,6 +114,11 @@ iPhone Safari:
 1. Abra o app publicado em HTTPS no Safari.
 2. Toque em Compartilhar.
 3. Toque em Adicionar à Tela de Início.
+
+## Publicação
+
+O projeto inclui configuração para Netlify, redirecionamento das rotas React e
+um checklist de migração segura em `DEPLOY_CHECKLIST.md`.
 
 ## Offline
 

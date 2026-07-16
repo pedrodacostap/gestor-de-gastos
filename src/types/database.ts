@@ -160,7 +160,22 @@ export type Database = {
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "credit_card_installments_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "credit_card_installments_purchase_id_fkey";
+            columns: ["purchase_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_card_purchases";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       credit_card_invoice_payments: {
         Row: {
@@ -542,7 +557,95 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_credit_card_purchase: {
+        Args: {
+          p_card_id: string;
+          p_category_id: string | null;
+          p_description: string;
+          p_installments_count: number;
+          p_notes: string | null;
+          p_purchase_date: string;
+          p_total_amount: number;
+        };
+        Returns: string;
+      };
+      create_debt_payment: {
+        Args: {
+          p_account_id: string;
+          p_amount: number;
+          p_debt_id: string;
+          p_notes: string | null;
+          p_payment_date: string;
+        };
+        Returns: string;
+      };
+      create_goal_movement: {
+        Args: {
+          p_account_id: string | null;
+          p_amount: number;
+          p_goal_id: string;
+          p_movement_date: string;
+          p_notes: string | null;
+          p_type: "deposit" | "withdrawal";
+        };
+        Returns: string;
+      };
+      create_subscription_charge: {
+        Args: {
+          p_charge_date: string;
+          p_subscription_id: string;
+        };
+        Returns: string;
+      };
+      delete_credit_card_purchase: {
+        Args: { p_purchase_id: string };
+        Returns: undefined;
+      };
+      delete_debt_safely: {
+        Args: { p_debt_id: string };
+        Returns: undefined;
+      };
+      delete_goal_safely: {
+        Args: { p_goal_id: string };
+        Returns: undefined;
+      };
+      pay_credit_card_invoice: {
+        Args: {
+          p_account_id: string;
+          p_card_id: string;
+          p_expected_total: number;
+          p_invoice_month: string;
+          p_paid_at: string;
+        };
+        Returns: string;
+      };
+      rebuild_credit_card_installments: {
+        Args: { p_purchase_id: string };
+        Returns: undefined;
+      };
+      reverse_credit_card_invoice_payment: {
+        Args: { p_payment_id: string };
+        Returns: undefined;
+      };
+      reverse_subscription_charge: {
+        Args: { p_charge_id: string };
+        Returns: undefined;
+      };
+      update_credit_card_purchase: {
+        Args: {
+          p_card_id: string;
+          p_category_id: string | null;
+          p_description: string;
+          p_installments_count: number;
+          p_notes: string | null;
+          p_purchase_date: string;
+          p_purchase_id: string;
+          p_total_amount: number;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

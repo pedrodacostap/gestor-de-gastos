@@ -130,6 +130,16 @@ export function DebtsPage() {
     }
   }
 
+  async function handleDeleteDebt(debtId: string) {
+    if (!user || !window.confirm("Excluir esta dívida?")) return;
+    try {
+      await deleteDebt(user.id, debtId);
+      await loadData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao excluir dívida.");
+    }
+  }
+
   return (
     <PageFrame
       actions={<Button icon={<Plus className="h-4 w-4" />} onClick={() => openDebt()}>Nova dívida</Button>}
@@ -166,7 +176,7 @@ export function DebtsPage() {
                 </div>
                 <div className="flex gap-1">
                   <Button onClick={() => openDebt(debt.id)} size="sm" variant="ghost"><Edit2 className="h-4 w-4" /></Button>
-                  <Button onClick={() => user && deleteDebt(user.id, debt.id).then(loadData)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
+                  <Button onClick={() => handleDeleteDebt(debt.id)} size="sm" variant="ghost"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               {debt.high_interest && (
@@ -225,7 +235,7 @@ export function DebtsPage() {
         <form className="space-y-4" onSubmit={handlePaymentSubmit}>
           <Select label="Conta" options={data.accounts.map((account) => ({ label: account.name, value: account.id }))} value={paymentForm.account_id} onChange={(event) => setPaymentForm((current) => ({ ...current, account_id: event.target.value }))} />
           <Input label="Valor" type="number" step="0.01" value={paymentForm.amount} onChange={(event) => setPaymentForm((current) => ({ ...current, amount: Number(event.target.value) }))} />
-          <Input label="Data" type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((current) => ({ ...current, payment_date: event.target.value }))} />
+          <Input label="Data" max={getTodayValue()} type="date" value={paymentForm.payment_date} onChange={(event) => setPaymentForm((current) => ({ ...current, payment_date: event.target.value }))} />
           <Button disabled={!paymentForm.account_id} isFullWidth type="submit">Registrar pagamento</Button>
         </form>
       </Modal>

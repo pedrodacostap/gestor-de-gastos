@@ -6,6 +6,7 @@ import { ConnectionStatus, InstallAppPrompt } from "../pwa";
 import { Button } from "../ui";
 
 function getCurrentTitle(pathname: string) {
+  if (pathname === "/mais") return "Mais";
   return (
     navigationItems.find((item) => item.path === pathname)?.label ??
     "Gestor de Gastos"
@@ -28,13 +29,15 @@ export function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1440px]">
+    <div className="min-h-dvh bg-[var(--app-bg)] text-white">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1440px]">
         <aside className="hidden w-72 shrink-0 border-r border-white/10 bg-black/20 px-4 py-5 backdrop-blur-2xl lg:block">
           <div className="mb-7 flex items-center gap-3 px-2">
-            <div className="grid h-11 w-11 place-items-center rounded-lg bg-white text-zinc-950 shadow-soft">
-              <span className="text-lg font-bold">G</span>
-            </div>
+            <img
+              alt="Logotipo do Gestor de Gastos"
+              className="h-11 w-11 rounded-xl object-cover shadow-soft"
+              src="/logo-oficial.png"
+            />
             <div>
               <p className="text-sm font-semibold text-white">Gestor de Gastos</p>
               <p className="text-xs text-zinc-400">Finanças pessoais</p>
@@ -81,10 +84,10 @@ export function AppShell() {
 
               <div className="flex items-center gap-2">
                 <ConnectionStatus />
-                <Button aria-label="Pesquisar" size="sm" variant="ghost">
+                <Button aria-label="Pesquisar transações" onClick={() => navigate("/transacoes")} size="sm" variant="ghost">
                   <Search aria-hidden="true" className="h-5 w-5" />
                 </Button>
-                <Button aria-label="Notificações" size="sm" variant="ghost">
+                <Button aria-label="Ver calendário e alertas" onClick={() => navigate("/calendario")} size="sm" variant="ghost">
                   <Bell aria-hidden="true" className="h-5 w-5" />
                 </Button>
                 <Button aria-label="Sair" onClick={handleSignOut} size="sm" variant="ghost">
@@ -93,6 +96,7 @@ export function AppShell() {
                 <Button
                   className="hidden sm:inline-flex"
                   icon={<Plus aria-hidden="true" className="h-4 w-4" />}
+                  onClick={() => navigate("/transacoes?novo=1")}
                   size="sm"
                 >
                   Novo

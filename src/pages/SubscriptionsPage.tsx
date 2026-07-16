@@ -1,4 +1,4 @@
-import { Plus, Repeat, XCircle } from "lucide-react";
+import { History, Plus, Repeat, RotateCcw, XCircle } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { PageFrame } from "../components/layout/PageFrame";
 import { Badge, Button, Card, EmptyState, Input, Modal, Select } from "../components/ui";
@@ -8,6 +8,7 @@ import {
   createSubscription,
   createSubscriptionCharge,
   listPlannerData,
+  reverseSubscriptionCharge,
 } from "../services/plannerService";
 import { useAuth } from "../context/auth/useAuth";
 import type { PlannerData, SubscriptionInput } from "../types/planner";
@@ -73,6 +74,20 @@ export function SubscriptionsPage() {
     }
   }
 
+  async function handleReverseCharge(chargeId: string) {
+    if (!user || !window.confirm("Desfazer esta cobrança e a transação vinculada?")) {
+      return;
+    }
+
+    try {
+      await reverseSubscriptionCharge(user.id, chargeId);
+      await loadData();
+      setMessage("Cobrança desfeita com sucesso.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao desfazer cobrança.");
+    }
+  }
+
   return (
     <PageFrame
       actions={<Button icon={<Plus className="h-4 w-4" />} onClick={() => setIsModalOpen(true)}>Nova assinatura</Button>}
@@ -129,6 +144,40 @@ export function SubscriptionsPage() {
             </Card>
           ))}
         </section>
+      )}
+
+      {data.subscriptionCharges.length > 0 && (
+        <Card tone="elevated">
+          <div className="mb-3 flex items-center gap-2">
+            <History className="h-5 w-5 text-sky-300" />
+            <h2 className="text-lg font-semibold text-white">Histórico de cobranças</h2>
+          </div>
+          <div className="divide-y divide-white/10">
+            {data.subscriptionCharges.slice(0, 8).map((charge) => {
+              const subscription = data.subscriptions.find(
+                (item) => item.id === charge.subscription_id,
+              );
+              return (
+                <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between" key={charge.id}>
+                  <div>
+                    <p className="font-medium text-white">{subscription?.name ?? "Assinatura"}</p>
+                    <p className="text-sm text-zinc-400">
+                      {formatDate(charge.charge_date)} · {formatCurrency(Number(charge.amount))}
+                    </p>
+                  </div>
+                  <Button
+                    icon={<RotateCcw className="h-4 w-4" />}
+                    onClick={() => handleReverseCharge(charge.id)}
+                    size="sm"
+                    variant="danger"
+                  >
+                    Desfazer
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nova assinatura">
