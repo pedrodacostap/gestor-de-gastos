@@ -15,17 +15,25 @@ begin
     raise exception 'Usuário não autenticado.';
   end if;
 
-  select purchase, card.closing_day
-  into purchase_record, card_closing_day
-  from public.credit_card_purchases purchase
-  join public.credit_cards card on card.id = purchase.card_id
-  where purchase.id = p_purchase_id
-    and purchase.user_id = auth.uid()
-    and card.user_id = auth.uid()
-  for update of purchase;
+  select *
+  into purchase_record
+  from public.credit_card_purchases
+  where id = p_purchase_id
+    and user_id = auth.uid()
+  for update;
 
   if not found then
     raise exception 'Compra não encontrada.';
+  end if;
+
+  select closing_day
+  into card_closing_day
+  from public.credit_cards
+  where id = purchase_record.card_id
+    and user_id = auth.uid();
+
+  if not found then
+    raise exception 'Cartão não encontrado.';
   end if;
 
   if exists (
